@@ -40,10 +40,10 @@ int prevButtonState;
 
 void setup() {
   Serial.begin(9600);
-  int tOut = 20;    // Wait up to 20 ms for the Serial port to initialise
+  int tOut = 200;    // Wait up to 2000 ms (2 seconds) for the Serial port to initialise
   while (tOut && !Serial) {
     tOut--;
-    delay(1);
+    delay(10);
   }
 
   Serial.println("Boot 0 - LED controlled by switch - with state");
