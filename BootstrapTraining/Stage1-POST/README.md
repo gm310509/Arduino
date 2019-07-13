@@ -1,5 +1,5 @@
 # Arduino Bootcamp
-## Stage 1 - POST Power on Self Test.
+## Stage 1 - POST (Power on Self Test)
 
 In this series of tutorials, we will look at how Integrated Circuits can
 do some cool stuff for us. In this case, we will look at an 8 digit LED display
