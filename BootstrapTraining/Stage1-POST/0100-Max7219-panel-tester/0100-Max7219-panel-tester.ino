@@ -5,17 +5,6 @@
  * A simple program to test the connectivity between Arduino
  * and the 8 digit LED Panel controlled by a Max7219 LED controller.
  * 
- * Examples of this module include:
- * - https://www.jaycar.com.au/8-digit-7-segment-display-module/p/XC3714
- * - https://hobbycomponents.com/displays/597-max7219-8-digit-seven-segment-display-module
- * - http://www.logicware.com.au/max7219-8-digit-red-led-digital-display-module-boa
- * 
- * Arduino connections as follows:
- * - Pin 10   ->   CS (enable/LODA/LOAD)
- * - Pin 11   ->   CLK
- * - Pin 12   ->   DIN / Data
- * 
- * 
  * This program simply displays the 16 hexadecimal digits on the right most
  * digit of the display panel.
  * 
@@ -29,6 +18,17 @@
  * - How to use the library and
  * - Test that the above basics are all working before proceeding
  *   to a more interesting example.
+ * 
+ * 
+ * Examples of the LED module include:
+ * - https://www.jaycar.com.au/8-digit-7-segment-display-module/p/XC3714
+ * - https://hobbycomponents.com/displays/597-max7219-8-digit-seven-segment-display-module
+ * - http://www.logicware.com.au/max7219-8-digit-red-led-digital-display-module-boa
+ * 
+ * Arduino connections as follows:
+ * - Pin 10   ->   CS (enable/LODA/LOAD)
+ * - Pin 11   ->   CLK
+ * - Pin 12   ->   DIN / Data
  * 
  */
 
