@@ -3,7 +3,7 @@
  * -------------------------
  * 
  * This program builds on the previous one (0100-Max7219 Panel Tester) by
- * adding a function to output an arbitrary unsigned integer onto the
+ * adding a function to output an arbitrary signed integer onto the
  * 8 digit LED Panel controlled by a Max7219 LED controller.
  * 
  * This program displays a timer counting upwards in second increments (approximately).
