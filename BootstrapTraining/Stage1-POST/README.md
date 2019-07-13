@@ -34,3 +34,12 @@ The schematics directory has a fritzing model and a Libre Draw circuit diagram.
 You will need to install the [LibreSymbols](https://extensions.libreoffice.org/extensions/libresymbols)
 addon to see the circuit diagram in Libre Draw.
 
+## Projects
+The projects are as follows:
+
+|Project|Description|
+|-------|-----------|
+|0100-Max7219-Panel-Tester|A basic program to test installation of the libraries and connection of the LED Panel to Arduino|
+|0101-Max7219-Panel-Timer|A basic timer program that introduces a function to output a signed integer onto the LED Panel|
+|0102-Calcenstein-Slave|A basic calculator (with plent of TODO's for you to enjoy) that is driven by input from the connected PC|
+
