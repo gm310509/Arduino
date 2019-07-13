@@ -6,7 +6,6 @@
  * adding a function to output an arbitrary unsigned integer onto the
  * 8 digit LED Panel controlled by a Max7219 LED controller.
  * 
- * 
  * This program displays a timer counting upwards in second increments (approximately).
  * 
  * To enable this program, import the following library into the Arduino IDE:
@@ -14,11 +13,10 @@
  *   http://wayoda.github.io/LedControl/
  * 
  * The outcomes of this program are to learn:
- * - How to connect an SPI/I2C module to Arduino
- * - How to import a library to manage the module
- * - How to use the library and
- * - Test that the above basics are all working before proceeding
- *   to a more interesting example.
+ * - Addition of a generic "output integer to LED Panel" function.
+ *
+ * The output function will be used as a basis for the next program which
+ * implements a basic calculator.
  * 
  * Examples of the LED module include:
  * - https://www.jaycar.com.au/8-digit-7-segment-display-module/p/XC3714
@@ -34,27 +32,47 @@
 #include "LedControl.h"
 
 /*
- Now we need a LedControl to work with.
-
-   pin 12 is connected to the DataIn (or DIN)
-   pin 11 is connected to the CLK 
-   pin 10 is connected to LOAD (or CS)
-
- We have only a single MAX72XX.
+ * Now we need a LedControl to work with.
+ *
+ *   pin 12 is connected to the DataIn (or DIN)
+ *   pin 11 is connected to the CLK 
+ *   pin 10 is connected to LOAD (or CS)
+ *
+ * We have only a single MAX72XX.
  */
-LedControl lc=LedControl(12,11,10,1);
+LedControl lc = LedControl(12,11,10,1);
 
+/*******************
+ * setup
+ * -----
+ * 
+ * Initialise the LCD Panel and the Serial Monitor.
+ * 
+ */
 void setup() {
   Serial.begin(9600);
+#ifdef ARDUINO_AVR_LEONARDO
+  int tOut = 200;    // Wait up to 2000 ms (2 seconds) for the Serial port to initialise
+  while (tOut && !Serial) {
+    tOut--;
+    delay(10);
+  }
+  Serial.println("Leonardo Serial initialisation complete.");
+#else
+  Serial.println("Not Leonardo");
+#endif
+
   /*
-   The MAX72XX is in power-saving mode on startup,
-   we have to do a wakeup call
+   * The MAX72XX is in power-saving mode on startup,
+   * we have to do a wakeup call
    */
   lc.shutdown(0,false);
   /* Set the brightness to a medium values */
   lc.setIntensity(0,4);
   /* and clear the display */
   lc.clearDisplay(0);
+
+  Serial.println("POST - Max7219 panel - 0101 - timer/counter");
 }
 
 /*************************************************
@@ -112,7 +130,7 @@ int cntr = -16;
  * (This is a question for you to think about).
  * 
  * What would be a better way to do this?
- * (You have already seen the answer in some of the Boot 0 - Power on Reset modules)
+ * (Hint: You have already seen the answer in some of the Boot 0 - Power on Reset modules)
  * 
  */
 void loop() {

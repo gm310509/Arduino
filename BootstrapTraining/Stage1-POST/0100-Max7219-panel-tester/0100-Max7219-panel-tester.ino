@@ -52,17 +52,27 @@ LedControl lc=LedControl(12,11,10,1);
  */
 void setup() {
   Serial.begin(9600);
-  /*
-   The MAX72XX is in power-saving mode on startup,
-   we have to do a wakeup call
-   */
+#ifdef ARDUINO_AVR_LEONARDO
+  int tOut = 200;    // Wait up to 2000 ms (2 seconds) for the Serial port to initialise
+  while (tOut && !Serial) {
+    tOut--;
+    delay(10);
+  }
+  Serial.println("Leonardo Serial initialisation complete.");
+#else
+  Serial.println("Not Leonardo");
+#endif
+/* 
+ *   The MAX72XX is in power-saving mode on startup,
+ *   we have to do a wakeup call
+ */
   lc.shutdown(0,false);
   /* Set the brightness to a medium values */
   lc.setIntensity(0,4);
   /* and clear the display */
   lc.clearDisplay(0);
   
-  Serial.println("POST - Max7219 panel - test pattern");
+  Serial.println("POST - Max7219 panel - 0100 - test pattern");
 }
 
 /* The "hexadecimal" counter value that we will display on the LED Panel. */
