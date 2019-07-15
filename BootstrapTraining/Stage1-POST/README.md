@@ -31,8 +31,7 @@ To complete this tutorial you will need:
 ## Connecting it up
 The schematics directory has a fritzing model and a Libre Draw circuit diagram.
 
-You will need to install the [LibreSymbols](https://extensions.libreoffice.org/extensions/libresymbols)
-addon to see the circuit diagram in Libre Draw.
+To view the circuit in Fritzing, it will be necessary to install the "8 digit 7 segment LED Module with Max7219.fzpz" first.
 
 ## Projects
 The projects are as follows:
