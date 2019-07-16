@@ -213,6 +213,7 @@ void process(char ch) {
  */
 
 void setup() {
+  Serial.begin(9600);
 #ifdef ARDUINO_AVR_LEONARDO
   int tOut = 200;    // Wait up to 2000 ms (2 seconds) for the Serial port to initialise
   while (tOut && !Serial) {

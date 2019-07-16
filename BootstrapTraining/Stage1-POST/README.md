@@ -18,7 +18,7 @@ for to acheive the learnings.
 Enjoy!
 
 
-## Parts list.
+## Parts list
 
 To complete this tutorial you will need:
 
