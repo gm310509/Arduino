@@ -195,6 +195,8 @@ void process(char ch) {
       case ' ':
       // case 0x0d:
         eval();
+          Serial.print("\nAnswer is: ");
+        Serial.println(acc);
         acc = 0;
         break;
       default:
