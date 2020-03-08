@@ -342,6 +342,7 @@ void showCmd(int cmd, int duration) {
 //
 void loop() {
   int chRead;
+  int x;
   
   led.timerEvent();
 
@@ -368,7 +369,14 @@ void loop() {
           duration = 1000;
           showDuration(duration);
           break;
-          
+
+ 
+        case 'X':
+        case 'x':
+          x = analogRead(A0);
+          Serial.print("A0: "); Serial.println(x);
+          break;
+
         case 'Z':
         case 'z':
           led.clearSequence();
