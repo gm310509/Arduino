@@ -2,7 +2,7 @@
 /**
  * StatusLed class.
  * 
- * A class that manages a two leg bi-colour LED.
+ * A class that manages a two or three leg bi-colour LED.
  * 
  * The use case is on projects that do not have any other form
  * of user interface (and of course those that do) to use a single
@@ -24,12 +24,14 @@ class StatusLed {
      * 
      * @param a the pin that one leg of the LED is connected to (default pin 7).
      * @param b the pin that the second leg of the LED is connected to (default pin 8).
+     * @param threePinMode whether the LED being controlled is a three pin (common Cathode) or not (default false = 2 pin mode)
      */
-    StatusLed(const int a = 7, const int b = 8) {
+    StatusLed(const int a = 7, const int b = 8, const bool threePinMode = false) {
       _a = a;
       _b = b;
       pinMode(_a, OUTPUT);
       pinMode(_b, OUTPUT);
+      _threePinMode = threePinMode;
     }
 
     /**
@@ -44,6 +46,30 @@ class StatusLed {
      */
     int getB() {
       return _b;
+    }
+
+    /**
+     * Return the number of steps in the sequence.
+     * @return the number of steps in the sequence.
+     */
+    int getStepCount() {
+      return _numSteps;
+    }
+
+    /**
+     * Is the StatusLed operating in 3 pin (common cathode) mode?
+     * @return true if in 3 pin mode - false if in 2 pin mode.
+     */
+    bool isThreePinMode() {
+      return _threePinMode;
+    }
+
+    /**
+     * Is the StatusLed operating in 2 pin mode?
+     * @return true if in 2 pin mode - false if in 3 pin mode.
+     */
+    bool isTwoPinMode() {
+      return !_threePinMode;
     }
 
     /**
@@ -84,8 +110,6 @@ class StatusLed {
       return _numSteps;
     }
 
-
-
     /**
      * Add a step to the sequence that has the LED turned off
      * for the specified duration.
@@ -106,14 +130,6 @@ class StatusLed {
      */
     int on(int colour, int duration) {
       return _addStep(colour, duration);
-    }
-
-    /**
-     * Return the number of steps in the sequence.
-     * @return the number of steps in the sequence.
-     */
-    int getStepCount() {
-      return _numSteps;
     }
 
     /**
@@ -154,7 +170,7 @@ class StatusLed {
       // If the colour sequence is "BOTH", then alternate rapidly between
       // both colours. For example, in the case of a RED / GREEN bicolour LED,
       // This will make the LED take on a sort of yellowish colour.
-      if (_colourSeq[_colourIndex] == BOTH) {
+      if (_colourSeq[_colourIndex] == BOTH && ! _threePinMode) {
         if (millis() > _nextBothTime) {
           _setNextColour();
           _nextBothTime = millis() + 1;
@@ -185,6 +201,7 @@ class StatusLed {
     int _numSteps = 0;      // The number of steps in the sequence.
     int _colourSeq[MAX_STEPS];    // The sequence of LED illumination steps.
     int _colourTime[MAX_STEPS];   // The duration of a step. This array aligns with _colourSeq.
+    bool _threePinMode;     // True if the (bi-colour) LED has three pins. False indicates two pins.
 
     unsigned long _nextStepTime;  // The time (ms) when the next step in the sequence will be activated.
     unsigned long _nextBothTime;  // Only applies if the state is BOTH - determines when the current flow must next be reversed.
@@ -243,7 +260,10 @@ class StatusLed {
           break;
           
         case BOTH:
-          if (_currActiveLed == A) {
+          if (_threePinMode) {
+            digitalWrite(_a, HIGH);
+            digitalWrite(_b, HIGH);
+          } else if (_currActiveLed == A) {   // Not three pin mode, so alternate.
             _bOn();
             _currActiveLed = B;
           } else {
@@ -256,29 +276,40 @@ class StatusLed {
 
 
 
-StatusLed led;
+StatusLed led2;
+StatusLed led3 (9, 10, true);
 
 // Blinking green 3/4
-int seq1Steps [] = { led.A, led.OFF };
+int seq1Steps [] = { StatusLed::A, StatusLed::OFF };
 int seq1Times [] = { 750, 250 };
 
 // Long red, short red.
-int seq2Steps [] = { led.B, led.OFF, led.B, led.OFF };
-int seq2Times [] = { 600, 150, 100, 150 };
+int seq2Steps [] = { StatusLed::B, StatusLed::OFF, StatusLed::B, StatusLed::OFF };
+int seq2Times [] = { 1000, 150, 100, 150 };
 
 // Fast red flash.
-int seq3Steps [] = { led.B, led.OFF };
+int seq3Steps [] = { StatusLed::B, StatusLed::OFF };
 int seq3Times [] = { 100, 100 };
 
 // Long green, short red.
-int seq4Steps [] = { led.A, led.OFF, led.B, led.OFF };
+int seq4Steps [] = { StatusLed::A, StatusLed::OFF, StatusLed::B, StatusLed::OFF };
 int seq4Times [] = { 800, 200, 200, 200 };
 
 // Traffic light
-int seq5Steps [] = { led.A, led.BOTH, led.B };
+int seq5Steps [] = { StatusLed::A, StatusLed::BOTH, StatusLed::B };
 int seq5Times [] = { 2000, 750, 1500 };
 
+// Blinking red 10/11 and off 1/11 (duty cycle 10:1)
+int seq6Steps [] = { StatusLed::B, StatusLed::OFF };
+int seq6Times [] = { 1000, 100 };
 
+
+void showLedConfig(StatusLed *led) {
+  Serial.print(F("Pin A: ")); Serial.print(led->getA());
+  Serial.print(F(" Pin B: ")); Serial.print(led->getB());
+  Serial.print(F(" 3 pin mode: ")); Serial.println(led->isThreePinMode());
+  
+}
 
 void setup() {
 
@@ -288,14 +319,13 @@ void setup() {
     delay(1);
   }
 
-  led.clearSequence();
-
   Serial.println();
-  Serial.print("LED Pin A: "); Serial.print(led.getA());
-  Serial.print(" Pin B: "); Serial.println(led.getB());
-  Serial.print("A = "); Serial.println(led.A);
-  Serial.print("B = "); Serial.println(led.B);
-  Serial.print("Both = "); Serial.println(led.BOTH);
+  Serial.print("LED2: "); showLedConfig(&led2);
+  Serial.print("LED3: "); showLedConfig(&led3);
+  
+  led2.clearSequence();
+  led3.clearSequence();
+
   
   Serial.println("Ready");
 }
@@ -304,34 +334,34 @@ void setup() {
 int duration = 1000;
 
 void showDuration(int duration) {
-  Serial.print("duration = "); Serial.println(duration);
+  Serial.print(F("duration = ")); Serial.println(duration);
 }
 
 void showCmd(int cmd, int duration) {
-  Serial.print("Step: "); Serial.print(led.getStepCount()); Serial.print("  ");
-  if (cmd == led.OFF) {
-    Serial.print("led.off(");
+  Serial.print(F("Step: ")); Serial.print(led2.getStepCount()); Serial.print(F("  "));
+  if (cmd == StatusLed::OFF) {
+    Serial.print(F("led.off("));
   } else {
-    Serial.print("led.on(");
+    Serial.print(F("led.on("));
     switch (cmd) {
-      case led.A:
-        Serial.print("led.A");
+      case StatusLed::A:
+        Serial.print(F("led.A"));
         break;
-      case led.B:
-        Serial.print("led.B");
+      case StatusLed::B:
+        Serial.print(F("led.B"));
         break;
-      case led.BOTH:
-        Serial.print("led.BOTH");
+      case StatusLed::BOTH:
+        Serial.print(F("led.BOTH"));
         break;
       default:
-        Serial.print("led.UNEXPECTED:");
+        Serial.print(F("led.UNEXPECTED:"));
         Serial.print(cmd);
         break;
     }
-    Serial.print(", ");
+    Serial.print(F(", "));
   }
   Serial.print(duration);
-  Serial.println(");");
+  Serial.println(F(");"));
 }
 
 
@@ -344,7 +374,8 @@ void loop() {
   int chRead;
   int x;
   
-  led.timerEvent();
+  led2.timerEvent();
+  led3.timerEvent();
 
   if ( (chRead = Serial.read()) != -1) {
     if (chRead > ' ') {
@@ -374,53 +405,68 @@ void loop() {
         case 'X':
         case 'x':
           x = analogRead(A0);
-          Serial.print("A0: "); Serial.println(x);
+          Serial.print(F("A0: ")); Serial.println(x);
           break;
 
         case 'Z':
         case 'z':
-          led.clearSequence();
-          Serial.println("Clear Steps");
+          led2.clearSequence();
+          led3.clearSequence();
+          Serial.println(F("Clear Steps"));
           break;
 
         case '!':       // Shift 1.
-          led.loadSequence(seq1Steps, seq1Times, sizeof (seq1Steps) / sizeof(seq1Steps[0]));
+          led2.loadSequence(seq1Steps, seq1Times, sizeof (seq1Steps) / sizeof(seq1Steps[0]));
+          led3.loadSequence(seq1Steps, seq1Times, sizeof (seq1Steps) / sizeof(seq1Steps[0]));
           break;
           
         case '@':       // Shift 2.
-          led.loadSequence(seq2Steps, seq2Times, sizeof (seq2Steps) / sizeof(seq2Steps[0]));
+          led2.loadSequence(seq2Steps, seq2Times, sizeof (seq2Steps) / sizeof(seq2Steps[0]));
+          led3.loadSequence(seq2Steps, seq2Times, sizeof (seq2Steps) / sizeof(seq2Steps[0]));
           break;
  
         case '#':       // Shift 3.
-          led.loadSequence(seq3Steps, seq3Times, sizeof (seq3Steps) / sizeof(seq3Steps[0]));
+          led2.loadSequence(seq3Steps, seq3Times, sizeof (seq3Steps) / sizeof(seq3Steps[0]));
+          led3.loadSequence(seq3Steps, seq3Times, sizeof (seq3Steps) / sizeof(seq3Steps[0]));
           break;
  
         case '$':       // Shift 4.
-          led.loadSequence(seq4Steps, seq4Times, sizeof (seq4Steps) / sizeof(seq4Steps[0]));
+          led2.loadSequence(seq4Steps, seq4Times, sizeof (seq4Steps) / sizeof(seq4Steps[0]));
+          led3.loadSequence(seq4Steps, seq4Times, sizeof (seq4Steps) / sizeof(seq4Steps[0]));
           break;
  
         case '%':       // Shift 5.
-          led.loadSequence(seq5Steps, seq5Times, sizeof (seq5Steps) / sizeof(seq5Steps[0]));
+          led2.loadSequence(seq5Steps, seq5Times, sizeof (seq5Steps) / sizeof(seq5Steps[0]));
+          led3.loadSequence(seq5Steps, seq5Times, sizeof (seq5Steps) / sizeof(seq5Steps[0]));
           break;
           
+        case '^':       // Shift 6.
+          led2.loadSequence(seq6Steps, seq6Times, sizeof (seq6Steps) / sizeof(seq6Steps[0]));
+          led3.loadSequence(seq6Steps, seq6Times, sizeof (seq6Steps) / sizeof(seq6Steps[0]));
+          break;
+
         case '0':
-          led.off(duration);
-          showCmd(led.OFF, duration);
+          led2.off(duration);
+          led3.off(duration);
+          showCmd(StatusLed::OFF, duration);
           break;
         case '1':
-          led.on(led.A, duration);
-          showCmd(led.A, duration);
+          led2.on(StatusLed::A, duration);
+          led3.on(StatusLed::A, duration);
+          showCmd(StatusLed::A, duration);
           break;
         case '2':
-          led.on(led.B, duration);
-          showCmd(led.B, duration);
+          led2.on(StatusLed::B, duration);
+          led3.on(StatusLed::B, duration);
+          showCmd(StatusLed::B, duration);
           break;
         case '3':
-          led.on(led.BOTH, duration);
-          showCmd(led.BOTH, duration);
+          led2.on(StatusLed::BOTH, duration);
+          led3.on(StatusLed::BOTH, duration);
+          showCmd(StatusLed::BOTH, duration);
           break;
         default:
-          Serial.println("Huh?");
+          Serial.print(F("??? -> ")); Serial.print((char) chRead); Serial.print(F(" (")); Serial.print(chRead); Serial.println(F(")"));
           break;
       }
     }
