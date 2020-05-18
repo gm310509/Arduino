@@ -1,7 +1,7 @@
 #include "StatusLed.h"
 
 StatusLed led2;
-StatusLed led3 (9, 10, true);
+StatusLed led3 (11, 12, false);     // Third parameter is 3 pin LED (true) or 2 pin (false)
 
 // Blinking green 3/4
 int seq1Steps [] = { StatusLed::A, StatusLed::OFF };
@@ -37,7 +37,7 @@ void showLedConfig(StatusLed *led) {
 
 void setup() {
 
-  Serial.begin(9600);
+  Serial.begin(38400);
 
   while (!Serial) {
     delay(1);
