@@ -3,18 +3,21 @@
 *info@auselectronicsdirect.com.au
 *2017.9.14 *
 *Copyright*
+* gm310509
+* --------
+* 2020-05-18  Added conditional compilation to use the final project's wiring configuration.
 ****************/
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
 
 // Uncomment this line to enable a configuration of the test program
-// that mimics the final configurations.
-#define FINAL_PROJECT_CONFIG
+// that is based upon the final project's wiring configuration.
+//#define FINAL_PROJECT_CONFIG
 
 #ifdef FINAL_PROJECT_CONFIG
-#define SensorLeft 7 //Define Left sensor input Pin6 
-#define SensorMiddle 4 //Define Mid sensor input Pin9 
-#define SensorRight 3 //Define Right sensor input Pin11
+#define SensorLeft 7    // Define Left sensor input Pin 7 
+#define SensorMiddle 4  // Define Middle sensor input Pin 4 
+#define SensorRight 3   // Define Right sensor input Pin 3
 #else
 #define SensorLeft 6 //Define Left sensor input Pin6 
 #define SensorMiddle 9 //Define Mid sensor input Pin9 

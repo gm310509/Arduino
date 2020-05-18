@@ -3,14 +3,18 @@
 *info@auselectronicsdirect.com.au
 *2017.9.14 *
 *Copyright*
+*
+* gm310509
+* --------
+* 2020-05-18  Added conditional compilation to use the final project's wiring configuration.
 ****************/
 
 // Uncomment this line to enable a configuration of the test program
-// that mimics the final configurations.
-#define FINAL_PROJECT_CONFIG
+// that is based upon the final project's wiring configuration.
+//#define FINAL_PROJECT_CONFIG
 
 #ifdef FINAL_PROJECT_CONFIG
-int servopin = 9;   //Define the Servo Pin 9 in the final configuration for Servo signal
+int servopin = 9;     // Define the Servo as Pin 9 which matches the final wiring configuration.
 #else
 int servopin=3;//Define the Servo Pin3 for Servo signal
 #endif
