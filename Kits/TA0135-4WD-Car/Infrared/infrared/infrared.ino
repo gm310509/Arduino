@@ -3,6 +3,11 @@
 *info@auselectronicsdirect.com.au
 *2017.9.14 *
 *Copyright*
+*
+* gm310509
+* --------
+* 2020-05-18  Added conditional compilation to use the final project's wiring configuration.
+
 ****************/
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
@@ -10,11 +15,12 @@
 LiquidCrystal_I2C lcd(0x27,16,2);
 
 // Uncomment this line to enable a configuration of the test program
-// that mimics the final configurations.
+// that is based upon the final project's wiring configuration.
+
 // NB: For this test, this is technically not needed as the configuration
 // of the test and the final version are the same, but I've included it for
-// consitency with the other test programs.
-#define FINAL_PROJECT_CONFIG
+// consistency with the other test programs.
+//#define FINAL_PROJECT_CONFIG
 
 #ifdef FINAL_PROJECT_CONFIG
 int RECV_PIN = 2;
