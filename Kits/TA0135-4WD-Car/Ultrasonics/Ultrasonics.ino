@@ -7,14 +7,24 @@
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
 LiquidCrystal_I2C lcd(0x27,16,2); // set the LCD address to 0x27 for a 16 chars and 2
+
+#define FINAL_PROJECT_CONFIG
+
+#ifdef FINAL_PROJECT_CONFIG
+int inputPin = 13; // define ultrasonic signal receiver pin ECHO to 13 
+int outputPin= 12; // define ultrasonic signal transmitter pin TRIG to 12 
+#else
 int inputPin = A0; // define ultrasonic signal receiver pin ECHO to D4 
 int outputPin= A1; // define ultrasonic signal transmitter pin TRIG to D5 
+#endif
 void setup()
 {
   Serial.begin(9600);
   lcd.init(); // initialize the lcd 
   lcd.backlight();
   pinMode(inputPin, INPUT); pinMode(outputPin,OUTPUT);
+  lcd.clear();
+  lcd.print("Ultrasonics");
 }
 void loop() {
   int old_distance; 
@@ -28,9 +38,10 @@ void loop() {
   if(old_distance!=distance)
   {
     old_distance=distance;
-    lcd.clear(); lcd.print("H = ");
-    lcd.setCursor(4, 0);
+    lcd.setCursor(0,1);
+    lcd.print("H = ");
     lcd.print(distance);
+    lcd.print("    ");
   }
   delay(200);
 }
