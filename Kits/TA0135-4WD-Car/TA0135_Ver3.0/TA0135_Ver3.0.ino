@@ -137,7 +137,8 @@ void setup()
   lcd.init();
   lcd.backlight();
   lcd.clear();
-
+  lcd.print("TA0135_Ver3.0");
+  delay(1000);
 }
 //******************************************************************(Void)
 void advance(int a) //Forward
@@ -564,5 +565,3 @@ void loop()
 
 
 }
-
-
