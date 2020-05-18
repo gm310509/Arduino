@@ -8,7 +8,19 @@
 #include <Wire.h>
 #include <IRremote.h>
 LiquidCrystal_I2C lcd(0x27,16,2);
+
+// Uncomment this line to enable a configuration of the test program
+// that mimics the final configurations.
+// NB: For this test, this is technically not needed as the configuration
+// of the test and the final version are the same, but I've included it for
+// consitency with the other test programs.
+#define FINAL_PROJECT_CONFIG
+
+#ifdef FINAL_PROJECT_CONFIG
+int RECV_PIN = 2;
+#else
 int RECV_PIN = 2;//12
+#endif
 /***************
  Up :      FF629D ;
  Back:     FFA857 ;
@@ -23,23 +35,29 @@ decode_results results;
 void setup()
 {
   Serial.begin(9600);
+  while (! Serial) {
+    delay(1);
+  }
   irrecv.enableIRIn(); // Start the receiver 
   lcd.init(); // initialize the lcd 
   lcd.backlight(); 
   lcd.clear();
   lcd.setCursor(0, 0); 
-  lcd.print("code:");
+  lcd.print(F("code:"));
+  Serial.println("IR Tester ready");
+  Serial.print("Connected on: "); Serial.println(RECV_PIN);
 } 
 void loop()
 {
   if (irrecv.decode(&results)) 
   {
-    lcd.setCursor(6, 0); 
-    lcd.print("");
-    lcd.setCursor(6, 0);
-    lcd.print(results.value, HEX);
+    if (results.value != 0xffffffff) {  // Don't bother outputing the "repeat" code to the LCD.
+      lcd.setCursor(6, 0); 
+      lcd.print("");
+      lcd.setCursor(6, 0);
+      lcd.print(results.value, HEX);
+    }
     Serial.println(results.value,HEX);
     irrecv.resume(); // Receive the next value
-    
   }
 }
