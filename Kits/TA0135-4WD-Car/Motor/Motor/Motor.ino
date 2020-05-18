@@ -29,11 +29,12 @@ LiquidCrystal_I2C lcd(0x27,16,2);
 //    will run in the opposite direction of the main test program).
 
 // Uncomment this line to enable a configuration of the test program
-// that mimics the final configurations.
+// that is based upon the final project's wiring configuration (but runs the motors
+// in the same direction as the final project).
 //#define FINAL_PROJECT_CONFIGURATION
 
 // Uncomment this line to enable a configuration of the test program
-// that mimics the final configurations.
+// that is based upon the test project's wiring configuration.
 //#define FINAL_PROJECT_DIRECTION
 
 /********************************************************************/
