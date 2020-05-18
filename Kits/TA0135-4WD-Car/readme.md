@@ -22,4 +22,4 @@ The kit includes:
 ![alt-text][carImage]
 
 
-[carImage]: https://github.com/gm310509/Arduino/master/Arduino/Kits/TA0135-4WD-Car/car.jpg
+[carImage]: https://github.com/gm310509/Arduino/blob/master/Kits/TA0135-4WD-Car/TA0135_small.png
