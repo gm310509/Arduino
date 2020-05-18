@@ -19,6 +19,8 @@ The kit includes:
 * Screws, nuts, bults and spacers
 * 2 x chassis
 
+An [annotated version of the instruction manual](https://bit.ly/3g3GSO2) can be obtained from my google drive https://bit.ly/3g3GSO2
+
 ![alt-text][carImage]
 
 
