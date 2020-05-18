@@ -6,9 +6,21 @@
 ****************/
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
+
+// Uncomment this line to enable a configuration of the test program
+// that mimics the final configurations.
+#define FINAL_PROJECT_CONFIG
+
+#ifdef FINAL_PROJECT_CONFIG
+#define SensorLeft 7 //Define Left sensor input Pin6 
+#define SensorMiddle 4 //Define Mid sensor input Pin9 
+#define SensorRight 3 //Define Right sensor input Pin11
+#else
 #define SensorLeft 6 //Define Left sensor input Pin6 
 #define SensorMiddle 9 //Define Mid sensor input Pin9 
 #define SensorRight 11 //Define Right sensor input Pin11
+#endif
+
 unsigned char SL; //Status of Left sensor 
 unsigned char SM; //Status of Middle sensor  
 unsigned char SR; //Status of Right sensor 
