@@ -3,15 +3,34 @@
 *info@auselectronicsdirect.com.au
 *2017.9.14 *
 *Copyright*
+*
+* gm310509
+* --------
+* 2020-05-18  Added conditional compilation to
+*             a) correct the reverse direction of motor running (as compared to the final project)
+*             b) Use the final project's wiring configuration.
+*             
 ****************/
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
 LiquidCrystal_I2C lcd(0x27,16,2);
 /**************************Pin Definition*************************************/
 
+// The following two constants control how this test program is compiled.
+// The default (original) test program is created when both of the following two
+// symbol definitions are commented out.
+//
+// NB: There is a precedence to these symbols.
+// If FINAL_PROJECT_CONFIGURATION is defined, then the wiring configuration of the final project will be used.
+// If FINAL_PROJECT_CONFIGURATION is *not* defined but FINAL_PROJECT_DIRECTION is defined, then the wiring
+//    configuration of the test program will be used, but the motors will run in the same direction as the final project
+//    (i.e. the opposite direction of the original test program)
+// Otherwise (If neither of the symbols are defined), the original test program's wiring and logic will be used (i.e. the motors
+//    will run in the opposite direction of the main test program).
+
 // Uncomment this line to enable a configuration of the test program
 // that mimics the final configurations.
-#define FINAL_PROJECT_CONFIGURATION
+//#define FINAL_PROJECT_CONFIGURATION
 
 // Uncomment this line to enable a configuration of the test program
 // that mimics the final configurations.
