@@ -84,10 +84,10 @@ int Car_speed = 200;
 void advance() // Forward
 {
 #if defined(FINAL_PROJECT_CONFIGURATION)
-  analogWrite(pinRB,255-Car_speed); //  使馬達（右後）動作 -> Activate the right side motors.
-  analogWrite(pinRF,255); 
-  analogWrite(pinLB,255-Car_speed); //使馬達（左後）動作 -> Activate the left side motors.
-  analogWrite(pinLF,255);
+  analogWrite(pinRB,0); //  使馬達（右後）動作 -> Activate the right side motors.
+  analogWrite(pinRF,Car_speed); 
+  analogWrite(pinLB,0); //使馬達（左後）動作 -> Activate the left side motors.
+  analogWrite(pinLF,Car_speed);
 #else
   digitalWrite(pinRB,HIGH); // 使馬達（右後）動作
   digitalWrite(pinRF,LOW); 
@@ -102,10 +102,10 @@ void advance() // Forward
 void turnR() //Turn right 2 wheel control
 {
 #if defined(FINAL_PROJECT_CONFIGURATION)
-  analogWrite(pinRB,255); //left 2 wheel backward
-  analogWrite(pinRF,255-Car_speed);
-  analogWrite(pinLB,255-Car_speed); 
-  analogWrite(pinLF,255); //right 2 wheel forward
+  analogWrite(pinRB,Car_speed); //left 2 wheel backward
+  analogWrite(pinRF,0);
+  analogWrite(pinLB,0); 
+  analogWrite(pinLF,Car_speed); //right 2 wheel forward
 #else
   digitalWrite(pinRB,LOW); //left 2 wheel backward
   digitalWrite(pinRF,HIGH);
@@ -120,10 +120,10 @@ void turnR() //Turn right 2 wheel control
 void turnL() //Left turn 2 wheel control
 {
 #if defined(FINAL_PROJECT_CONFIGURATION)
-  analogWrite(pinRB,255-Car_speed);
-  analogWrite(pinRF,255); //right 2 wheel forward
-  analogWrite(pinLB,255);
-  analogWrite(pinLF,255-Car_speed);//left 2 wheel backward 
+  analogWrite(pinRB,0);
+  analogWrite(pinRF,Car_speed); //right 2 wheel forward
+  analogWrite(pinLB,Car_speed);
+  analogWrite(pinLF,0);//left 2 wheel backward 
 #else
   digitalWrite(pinRB,HIGH);
   digitalWrite(pinRF,LOW); //right 2 wheel forward
@@ -149,10 +149,10 @@ void stopp() //Stop
 void back() //Backward
 {
 #if defined(FINAL_PROJECT_CONFIGURATION)
-  analogWrite(pinRB,255); //right 2 wheel backward
-  analogWrite(pinRF,255-Car_speed);
-  analogWrite(pinLB,255); //left 2 wheel forward
-  analogWrite(pinLF,255-Car_speed);
+  analogWrite(pinRB,Car_speed); //right 2 wheel backward
+  analogWrite(pinRF,0);
+  analogWrite(pinLB,Car_speed); //left 2 wheel forward
+  analogWrite(pinLF,0);
 #else
   digitalWrite(pinRB,LOW); //right 2 wheel backward
   digitalWrite(pinRF,HIGH);
