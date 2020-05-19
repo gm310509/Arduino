@@ -72,7 +72,7 @@ byte font[] = {
 byte ledDigits[] = { 0, 0, 0, 0 };
 
 // Which digit are we currently outputing to the digital I/O pins?
-byte selectedDigit = -1;
+volatile byte selectedDigit = -1;
 
 
 /*************************************
