@@ -19,7 +19,9 @@ The kit includes:
 * Screws, nuts, bults and spacers
 * 2 x chassis
 
-An [annotated version of the instruction manual](https://bit.ly/3g3GSO2) can be obtained from my google drive https://bit.ly/3g3GSO2
+An [annotated version of the instruction manual](https://bit.ly/3g3GSO2) can be obtained from my google drive (https://bit.ly/3g3GSO2). The annotations are notes that I made while building the project. They cover two main areas:
+1) Things that would have been helpful to know earlier in the development process.
+2) Errors and inconsistancies.
 
 ![alt-text][carImage]
 
