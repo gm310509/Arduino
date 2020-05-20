@@ -13,5 +13,7 @@ void setup()
   lcd.init(); // Initialize 
   lcd.backlight(); //Turn the Backlight on
   lcd.print("Arduino"); //Display Arduino
+  lcd.setCursor(0,1);
+  lcd.print("LCD Test");
 } 
 void loop() { }
