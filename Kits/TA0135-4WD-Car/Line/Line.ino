@@ -4,7 +4,19 @@
 *2017.9.14 *
 *Copyright*
 ****************/
-*/*
+/*
+ * This program works much better than the main program - it issues proper directives to the motors based upon the
+ * position of the black line relative to the sensors.
+ * 
+ * However, as it stands it is too aggressive when adjusting course.
+ * For example if it detects the black line to the left, it aggressively turns to the left and overshoots
+ * the black line. It then gets confused as none of the sensors register the black line and so it just stops the car.
+ * 
+ * History
+ * 2020-05-20 gm310509  Updated to get the advance to work correctly.
+ *                      Added LCD support to output status of Line tracking sensors.
+ */
+/*
   L289N Connection:
   ENA = 5V
   ENB = 5V
@@ -30,6 +42,9 @@
   Signal = 2
 */
 /***********************Motor Pin Definition*************************/
+#include <LiquidCrystal_I2C.h>
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
 int MotorRight1 = 5; //IN1 PWM enabled
 int MotorRight2 = 6; //IN2 PWM enabled
 int MotorLeft1 = 10; //IN3 PWM enabled
@@ -52,6 +67,9 @@ long IRAutorun = 0x00FF9867;         //Ultrasonics
 int SL;    //Status of Left line track sensor
 int SM;    //Status of Midd line track sensor
 int SR;    //Status of Righ line track sensor
+int SLPrev;    // Previous status of Left line track sensor
+int SMPrev;    // Previous status of Middle line track sensor
+int SRPrev;    // Previous status of Right line track sensor
 /*************************Define IR pins************************************/
 
 /*************************Init Ultrasonic sensor******************************/
@@ -127,9 +145,11 @@ void back(int g) //Back
 }
 void s_advance()
 {
-  analogWrite(MotorLeft1, 80);
+  analogWrite(MotorLeft1, 0);
+//  analogWrite(MotorLeft1, 80);
   analogWrite(MotorLeft2, 150);
-  analogWrite(MotorRight1, 80);
+  analogWrite(MotorRight1, 0);
+//  analogWrite(MotorRight1, 80);
   analogWrite(MotorRight2, 150);
 }
 void s_left()
@@ -145,6 +165,23 @@ void s_right()
   analogWrite(MotorRight1, 0);
   analogWrite(MotorRight2, 20);
 }
+
+
+int updateLineTracks(int pos, int prev, int curr) {
+  if (prev != curr) {
+    lcd.setCursor(pos, 1);
+    lcd.print(curr);
+  }
+  return curr;
+}
+void updateLineTracks() {
+  SLPrev = updateLineTracks( 3, SLPrev, SL);
+  SMPrev = updateLineTracks( 8, SMPrev, SM);
+  SRPrev = updateLineTracks(13, SRPrev, SR);
+}
+
+
+
 /******************Initializition ****************************************/
 void setup()
 {
@@ -155,6 +192,19 @@ void setup()
   pinMode(SensorLeft,  INPUT);    //Init left sensor
   pinMode(SensorMiddle, INPUT); //Init Middle sensor
   pinMode(SensorRight, INPUT);   //Init Right sensor
+  
+  lcd.init();
+  lcd.backlight();
+  lcd.clear();
+  lcd.print("TA0135_Ver3.0");
+  delay(1000);
+  
+  lcd.clear();
+  lcd.print("Line Track test mode");
+  lcd.setCursor(0,1);
+        //   01234567890123
+  lcd.print("SL=  SM=  SR=");
+  SRPrev = SMPrev = SLPrev = -1;      // Force update of LCD status the first time.
 }
 
 //******************************************************************************(LOOP)
@@ -163,6 +213,8 @@ void loop()
   SL = digitalRead(SensorLeft);
   SM = digitalRead(SensorMiddle);
   SR = digitalRead(SensorRight);
+  updateLineTracks();
+
   //right fast 20 200
   if (SM == HIGH && SR == HIGH && SL == LOW)
   {
@@ -175,14 +227,25 @@ void loop()
   }
   if (SM == HIGH && SR == LOW && SL == LOW)
   {
-    s_advance();
+    // the original s_advance does not move the car.
+    // This is because the function uses PWM to control the movement - which is fine.
+    // But, it is called constantly inside the loop. So, the PWM is constantly being
+    // reset. As a result, the PWM doesn't get a chance to "get started" during the constant
+    // reinitialisation.
+    // Solutions:
+    // a) Call the advance method (which is very aggressive)
+    // b) Add a delay after s_advance
+    // c) Fix the program to only make a change if there is a change in the sensor readings (I will do this
+    //    as a revision and commit it to my GitHub later).
+//    s_advance();
+    advance(1);
   }
   if(SM == LOW && SR == LOW && SL == HIGH)
   {
     turnL(2);
-    }
+  }
   if(SM == LOW && SR == HIGH && SL == LOW)
-{
+  {
   turnR(2);
   }
   else
@@ -191,5 +254,3 @@ void loop()
   }
 
 }
-
-
