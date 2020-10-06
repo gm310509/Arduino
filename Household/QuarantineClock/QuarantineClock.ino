@@ -338,7 +338,7 @@ char *commandDesc [] = {
   "Print system status"
 };
 
-
+const int NUM_DESC = sizeof(commandDesc) / sizeof (commandDesc[0]);
 /*
  * Output a list of the commands along with there description and some generic information.
  */
@@ -347,8 +347,12 @@ void showCommands() {
   for (int i = 0; i < sizeof(commands) / sizeof(commands[0]); i++) {
     Serial.print("  ");
     Serial.print(commands[i]);
-    Serial.print(": ");
-    Serial.println(commandDesc[i]);
+    if (i < NUM_DESC) {
+      Serial.print(": ");
+      Serial.println(commandDesc[i]);
+    } else {
+      Serial.println();
+    }
   }
   Serial.println(F("the format of any parameters is shown in parenthesis"));
   Serial.println(F("For example, use the following to set the time to 1:15 PM and 22 seconds:"));
