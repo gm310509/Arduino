@@ -9,6 +9,9 @@
  * 
  * Change history
  * --------------
+ * 2020-10 GMc  1.01.02.00
+ *   Added startup feedback showing the number of PIRs configured in the program.
+ *   
  * 2020-10 GMc  1.01.01.00
  *   Added print of PIR configuration and Version.
  *
@@ -21,7 +24,7 @@
  *   Initial Version
  */
 
-#define VERSION "1.01.01.00"
+#define VERSION "1.01.02.00"
 
 // Uncomment the following for debug messages.
 //#define DEBUG
@@ -102,6 +105,7 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, LOW);
   pinMode(ledStripPin, OUTPUT);
+  digitalWrite(ledStripPin, LOW);
 
 #ifdef DEBUG
   Serial.println(F("Debug mode on"));
@@ -116,6 +120,17 @@ void setup() {
     Serial.print(pirPins[i]);
   }
   Serial.println();
+
+  // Blink the led strip and builtin once for each PIR configured as
+  // visual feedback during startup.
+  for (int i = 0; i < pirCount; i++) {
+    analogWrite(ledStripPin, 128);
+    digitalWrite(LED_BUILTIN, HIGH);
+    delay(100);
+    analogWrite(ledStripPin, 0);
+    digitalWrite(LED_BUILTIN, LOW);
+    delay(100);
+  }
 
   // Initialise the time Keeper
   timePrev = millis();
