@@ -9,11 +9,19 @@
  * 
  * Change history
  * --------------
- * 2020-10 GMc    Added Debug constant+debug messages
- *                Expanded the PIR checking to support multiple PIR's
+ * 2020-10 GMc  1.01.01.00
+ *   Added print of PIR configuration and Version.
  *
- * 2016-04 GMc    Initial Version
+ * 2020-10 GMc  1.01.00.00  
+ *   Added Debug constant+debug messages
+ *   Expanded the PIR checking to support multiple PIR's
+ *   Added version history block
+ *
+ * 2016-04 GMc  1.00.00.00  
+ *   Initial Version
  */
+
+#define VERSION "1.01.01.00"
 
 // Uncomment the following for debug messages.
 //#define DEBUG
@@ -98,7 +106,16 @@ void setup() {
 #ifdef DEBUG
   Serial.println(F("Debug mode on"));
 #endif
-  Serial.println(F("Ready"));
+  Serial.print(F("Stairlight - "));
+  Serial.println(VERSION);
+  Serial.print(pirCount); Serial.print(F(" PIR configured on pin(s): "));
+  for (int i = 0; i < pirCount; i++) {
+    if (i != 0) {
+      Serial.print(F(", "));
+    }
+    Serial.print(pirPins[i]);
+  }
+  Serial.println();
 
   // Initialise the time Keeper
   timePrev = millis();
