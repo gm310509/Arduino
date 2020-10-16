@@ -6,8 +6,15 @@
  * 
  * An LDR (Analog A0) is used to detect ambient light levels. The LED is only turned on if the ambient
  * light level is lower than a specified threshold.
+ * 
+ * Change history
+ * --------------
+ * 2020-10 GMc    Added Debug constant+debug messages
+ *                Expanded the PIR checking to support multiple PIR's
+ * 
  */
 
+// Uncomment the following for debug messages.
 //#define DEBUG
 
 // Define a constant that determines at what light level should
@@ -19,16 +26,21 @@
   #define LIGHT_ON_THRESHOLD 200
 #endif
 
-#define DUAL_PIR_MODE
 
 // The pins to which the various peripherals are connected.
-int pirPinA = 2;             // Input: The signal from the primary PIR.
-#ifdef DUAL_PIR_MODE
-int pirPinB = 4;             // Input: The signal from the second PIR.
-#endif
+// NB: The pirPins array defines the pins to which the PIR signal (or out) pins are connected to.
+// IMPORTANT: The contents of this array need to be modified to reflect the number of PIR's that you have.
+//            each entry in the pirPins array defines that a PIR is connected to the specified pin.
+//            below are three examples that show 1 to 3 PIRs connected to the Arduino.
 
-int ledStripPin = 3;        // Output: PWM signal to the MOSFET.
-int lightSensorPin = A0;    // Input: The reading from the ligh sensor (LDR)
+//const int pirPins [] = {2};       // Define a single PIR connected to DIO pin 2
+//const int pirPins [] = {2, 4};    // Define dual PIRs. One is connected to DIO pin 2, the other to DIO pin 4.
+const int pirPins [] = {2, 4, 5};   // Define triple PIRs. They are connected to DIO pins 2, 4 and 5.
+
+const int pirCount = sizeof(pirPins) / sizeof(pirPins[0]);    // The number of PIR's defined.
+const int ledStripPin = 3;        // Output: PWM signal to the MOSFET.
+const int lightSensorPin = A0;    // Input: The reading from the ligh sensor (LDR)
+
 
 // Cooperative multi-tasking data.
 // Cooperative multi-tasking works by activating a task from time to time.
@@ -70,7 +82,7 @@ unsigned int lightCheckTmr = 0;   // A counter to measure how long since we last
  */
 void setup() {
   
-  Serial.begin(9600);
+  Serial.begin(115200);
   int cnt = 0;
   // Wait for the the Serial port to initialise (but don't wait forever)
   while (!Serial && cnt < 100) {
@@ -83,9 +95,9 @@ void setup() {
   pinMode(ledStripPin, OUTPUT);
 
 #ifdef DEBUG
-  Serial.println("***** DEBUG MODE ON ****");
+  Serial.println(F("Debug mode on"));
 #endif
-  Serial.println("Ready");
+  Serial.println(F("Ready"));
 
   // Initialise the time Keeper
   timePrev = millis();
@@ -142,13 +154,31 @@ void loop() {
   }
 }
 
+/*******************************************************
+ * check PIR Array
+ * Check each of the PIRs for motion detection.
+ * If any of them report motion detected, return a HIGH value (motion detected).
+ * Otherwise if none of them have reported any motion detected (i.e. all of them are LOW), then return a LOW value.
+ */
+int checkPirArray() {
+        // Step through the array of PIRs one by one
+  for (int i = 0; i < pirCount; i++) {
+    int triggeredInd = digitalRead(pirPins[i]);   // Read the PIR
+    if (triggeredInd) {                           // Is it triggered (i.e. triggeredInd is HIGH)?
+#ifdef DEBUG
+      Serial.print("pir "); Serial.print(i); Serial.print(F(" (DIO pin ")); Serial.print(pirPins[i]); Serial.println(F(") triggered."));
+#endif
+      return HIGH;                                // Yes, it is triggered, we only need one, so return immediately with a "motion detected" status.
+    }
+  }
+  return LOW;                                     // None of the PIRs are triggered, so return a no motion detected status.
+}
 
 /*****************************************************************************
  * Multi-tasking sub tasks start here
  */
-// Variables to track the last known state of the PIR - initially these should be OFF.
-int pirStateA = LOW;
-int pirStateB = LOW;
+ // Variable to track the last known state of the PIRs - initially this should be OFF.
+int pirState = LOW;
 
 // Variables to track what the LED control is doing.
 bool fadeDisabled = true;     // Are we fading? true = NO, false = YES
@@ -175,17 +205,11 @@ int brightness = 0;           // The current brightness. Initially the LED's are
  */
 void processPir() {
   // Read the PIR and see if it's state has changed from last time we checked.
-#ifdef DUAL_PIR_MODE
-  int valA = digitalRead(pirPinA);
-  int valB = digitalRead(pirPinB);
-  if (valA != pirStateA || valB != pirStateB) {
-    pirStateA = valA;         // PIR state has changed, so record this new state for subsequent state change checking.
-    pirStateB = valB;
-    if (pirStateA == HIGH || pirStateB == HIGH) { // Has the PIR detected motion?
-      Serial.print("Motion Detected. A=");        // Yep!
-      Serial.print(pirStateA);
-      Serial.print(", B=");
-      Serial.println(pirStateB);
+  int pirTriggeredInd = checkPirArray();        // Call the function that checks the PIR array for motion.
+  if (pirTriggeredInd != pirState) {            // has the motion status changed since we last checked?
+    pirState = pirTriggeredInd;                 // Yes, PIR state has changed, so record this new state for subsequent state change checking.
+    if (pirState == HIGH) { // Has the PIR detected motion?
+      Serial.println("Motion Detected");        // Yep!
                             // Signal that motion has been detected by turning the BUILTIN_LED on.
       digitalWrite(LED_BUILTIN, HIGH);
                             // Determine if we need to turn on the LED Strip.
@@ -196,43 +220,13 @@ void processPir() {
         fadeOn();           // initiate the turn LED's on sub-task
       }
     } else {                // Motion no longer detected.
-      Serial.print("Motion ended A=");
-      Serial.print(pirStateA);
-      Serial.print(", B=");
-      Serial.println(pirStateB);
+      Serial.println("Motion ended");
                             // Signal that motion is no longer detected by turning the BUILTIN_LED off.
       digitalWrite(LED_BUILTIN, LOW);
       fadeOff();            // initiate the turn LED's off sub-task
     }
   }
-      
-#else
-  int valA = digitalRead(pirPinA);
-  if (val! != pirStateA) {
-    pirStateA = valA;         // PIR state has changed, so record this new state for subsequent state change checking.
-    if (pirStateA == HIGH) { // Has the PIR detected motion?
-      Serial.print("Motion Detected. A=");        // Yep!
-      Serial.println (pirStateA);
-                            // Signal that motion has been detected by turning the BUILTIN_LED on.
-      digitalWrite(LED_BUILTIN, HIGH);
-                            // Determine if we need to turn on the LED Strip.
-                            // we will turn on the LED strip if:
-                            // a) the ambient light level is less than the LIGHT_ON_THRESHOLD, or
-                            // b) the current state of the LED's is on (brightness > 0)
-      if (getLightLevel() < LIGHT_ON_THRESHOLD || brightness > 0) {
-        fadeOn();           // initiate the turn LED's on sub-task
-      }
-    } else {                // Motion no longer detected.
-      Serial.print("Motion ended A=");
-      Serial.println (pirStateA);
-                            // Signal that motion is no longer detected by turning the BUILTIN_LED off.
-      digitalWrite(LED_BUILTIN, LOW);
-      fadeOff();            // initiate the turn LED's off sub-task
-    }
-  }
-#endif
 }
-
 
 /*************************************
  * Fade On
@@ -285,8 +279,6 @@ void processFade() {
     if (brightness < 255) {   // Yep, is the current brightness less than the maximum possible value?
       brightness++;           // Yep, increase the brightness and write it to the ledStripPin
       analogWrite(ledStripPin, brightness);
-//      Serial.print("FadeOn: " );
-//      Serial.println(brightness);
     } else {
       fadeDisabled = true;    // We have reached the maximum brightness (=255) so this task is done. Disable it.
 //      Serial.println("Fade on done.");
@@ -295,15 +287,12 @@ void processFade() {
     if (brightness > 0) {     // Is the current brightness more than the minimum possible value?
       brightness--;           // Yep, decrease the brightness by 1 and write it to the ledStripPin.
       analogWrite (ledStripPin, brightness);
-//      Serial.print("Fade Off: ");
-//      Serial.println(brightness);
     } else {
       fadeDisabled = true;    // We have reached the minimum brightness (= 0) so this task is done. Disable it.
- //     Serial.println("Fade off done.");
+//      Serial.println("Fade off done.");
     }
   }
 }
-
 
 /*************************************
  * get Light Level
@@ -321,7 +310,6 @@ int getLightLevel() {
   int lightLevel = 1023 - analogRead(lightSensorPin);      // Photo resistor with 10K voltage divider
   return lightLevel;  
 }
-
 
 /*************************************
  * process Light check
