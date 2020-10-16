@@ -34,9 +34,9 @@
 //            each entry in the pirPins array defines that a PIR is connected to the specified pin.
 //            below are three examples that show 1 to 3 PIRs connected to the Arduino.
 
-//const int pirPins [] = {2};       // Define a single PIR connected to DIO pin 2
+const int pirPins [] = {2};       // Define a single PIR connected to DIO pin 2
 //const int pirPins [] = {2, 4};    // Define dual PIRs. One is connected to DIO pin 2, the other to DIO pin 4.
-const int pirPins [] = {2, 4, 5};   // Define triple PIRs. They are connected to DIO pins 2, 4 and 5.
+//const int pirPins [] = {2, 4, 5};   // Define triple PIRs. They are connected to DIO pins 2, 4 and 5.
 
 const int pirCount = sizeof(pirPins) / sizeof(pirPins[0]);    // The number of PIR's defined.
 const int ledStripPin = 3;        // Output: PWM signal to the MOSFET.
