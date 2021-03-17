@@ -61,6 +61,8 @@
  * - Connect the Mega Serial to the USB (for programming and debugging).
  
  */
+#include "NullSerial.h"
+
 #define VERSION "1.0.0.0"
 
 #if defined(ARDUINO_AVR_MEGA2560)
@@ -68,6 +70,11 @@
   #define HOST_RX  "USB(0)"
   #define HOST_TX  "USB(1)"
   #define HOST  Serial
+  #define DEBUG Serial
+  
+//  NullSerial _debug(1, 2);
+//  #define DEBUG _debug
+
   #define ESP_BAUD  115200
   #define ESP_RX  15
   #define ESP_TX  14
@@ -85,6 +92,10 @@
   #define HOST_TX  11
   SoftwareSerial _host(HOST_TX, HOST_RX);     /* (my_RX, my_TX) */
   #define HOST  _host
+  
+  NullSerial _debug(HOST_TX, HOST_RX);
+  #define DEBUG Serial _debug
+
   #define ESP_BAUD  115200
   #define ESP_RX  "USB(0)"
   #define ESP_TX  "USB(1)"
@@ -141,22 +152,22 @@ boolean TIMEOUTseen = false;
  * 
  */
 void processInput (const char * msg) {
-  HOST.println();
-//  HOST.print("Received: ");
-//  HOST.println(msg);
+  DEBUG.println();
+//  DEBUG.print(F("Received: "));
+//  DEBUG.println(msg);
 
   OKseen = false;
   ERRORseen = false;
   FAILseen = false;
 
   if (strncmp(msg, "+IPD", 4) == 0) {
-    HOST.println("Received input from client");
+    HOST.println(F("Received input from client"));
     char led = msg[9];
     char setting = msg[10];
     if (led >= '1' && led <= '3') {
       led = led - '1';
     } else {
-      HOST.print("Invalid LED: "); HOST.println(led);
+      HOST.print(F("Invalid LED: ")); HOST.println(led);
       return;
     }
 
@@ -164,9 +175,9 @@ void processInput (const char * msg) {
      *  Comment out/Uncomment this block of print
      *  statements to represent out "development cycle".
      *************************************/
-    HOST.print("Setting LED "); HOST.print(led);
-      HOST.print(" on DIO "); HOST.print(led + 5);
-      HOST.println(setting == "+" ? " on" : " off");
+    DEBUG.print(F("Setting LED ")); DEBUG.print(led);
+      DEBUG.print(F(" on DIO ")); DEBUG.print(led + 5);
+      DEBUG.println(setting == "+" ? F(" on") : F(" off"));
 
     digitalWrite(led + 5, setting == '+');
   }
@@ -217,7 +228,7 @@ boolean accumulateESPData() {
  * Wait for a response of OK, ERROR, FAIL or a TIMEOUT.
  * The timeout period is specified by the toPeriod constant value.
  */
-const unsigned long toPeriod = 5000;    // millis to wait for reply (5 secs).
+const unsigned long toPeriod = 30000;    // millis to wait for reply (30 secs).
 void sendESP(const char *msg) {
   ESP.print(msg);
   ESP.print("\r\n");
@@ -233,14 +244,14 @@ void sendESP(const char *msg) {
     if (accumulateESPData()) {
             // A response has been recieved.
             // Debug output the status of the expected replies
-      HOST.print(F("OK, ERROR, FAIL = "));
-        HOST.print(OKseen); HOST.print(ERRORseen);
-        HOST.println(FAILseen);
+      DEBUG.print(F("OK, ERROR, FAIL = "));
+        DEBUG.print(OKseen); DEBUG.print(ERRORseen);
+        DEBUG.println(FAILseen);
       timeout = millis() + toPeriod;    // message rcvd, reset the timer.
     }
     if (millis() >= timeout) {
       TIMEOUTseen = true;
-      HOST.println(F("*** Timeout waiting for ESP reply"));
+      DEBUG.println(F("*** Timeout waiting for ESP reply"));
     }
   }
 }
@@ -297,17 +308,28 @@ void setup() {
     HOST.print(F(" @ ")); HOST.print(HOST_BAUD);
     HOST.print(F(" bps. RX, TX: "));
     HOST.print(HOST_RX); HOST.print(F(", ")); HOST.println(HOST_TX);
+
+  DEBUG.println(F("**** Debug messages enabled ****"));
+  HOST.println();
+
   pinMode(5, OUTPUT);             // Set some pins to output for LEDs.
   pinMode(6, OUTPUT);
   pinMode(7, OUTPUT);
 
-  HOST.println(F("Sending GetVersion"));
+  DEBUG.println(F("Sending GetVersion"));
   sendESP("AT+GMR");              // Get Version Info.
-//  HOST.println(F("Sending Max Connections=1"));
+    // Once off set mode and join the WiFi.
+//  DEBUG.println(F("Setting the mode"));
+//  sendESP("AT+CWMODE=1");         // Set operating mode to "station"
+//  DEBUG.println(F("Connect to my WiFi: HUAWEI-VRCY99"));
+//  sendESP("AT+CWJAP=\"HUAWEI-VRCY99\",\"yourpassword\"");
+
+//  DEBUG.println(F("Sending Max Connections=1"));
 //  sendESP("AT+CIPMUX=1");         // Enable Server
-//  HOST.println(F("Sending Start Server on Port 80"));
+//  DEBUG.println(F("Sending Start Server on Port 80"));
 //  sendESP("AT+CIPSERVER=1,80");   // Open port 80
-//  HOST.println(F("Ready"));
+  HOST.println(F("Ready"));
+  HOST.println();
 }
 
 
@@ -319,7 +341,6 @@ void setup() {
  * Process them as necessary.
  */
 void loop() {
-
   accumulateHOSTData();
   accumulateESPData();
 }
