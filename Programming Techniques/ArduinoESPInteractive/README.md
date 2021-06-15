@@ -1,6 +1,6 @@
 # ArduinoESPInteractive
 
-This program should be read in conjunction with my instructable. The instructable
+This program should be read in conjunction with my [instructable](https://www.instructables.com/Painless-WiFi-on-Arduino/). The instructable
 shows how to build an Arduino sketch that uses ESP8266 based WiFi without needing
 to constantly adjust DIP switches during the development cycle.
 

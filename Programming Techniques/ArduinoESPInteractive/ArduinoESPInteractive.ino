@@ -63,7 +63,18 @@
  */
 #include "NullSerial.h"
 
-#define VERSION "1.0.0.0"
+#define VERSION "1.1.0.1"
+/*
+ * Revisions.
+ * 1.1.0.1
+ *    Corrected bug for LED on/off debug messages.
+ *
+ * 1.1.0.0
+ *    Added concept of debug messages.
+ *    Added initialisation of WiFi to station mode and connect to WiFi boiler
+ *    plate code.
+ * 
+ */
 
 #if defined(ARDUINO_AVR_MEGA2560)
   #define HOST_BAUD 115200
@@ -94,7 +105,8 @@
   #define HOST  _host
   
   NullSerial _debug(HOST_TX, HOST_RX);
-  #define DEBUG Serial _debug
+  #define DEBUG _debug
+//  #define DEBUG _host
 
   #define ESP_BAUD  115200
   #define ESP_RX  "USB(0)"
@@ -160,26 +172,25 @@ void processInput (const char * msg) {
   ERRORseen = false;
   FAILseen = false;
 
-  if (strncmp(msg, "+IPD", 4) == 0) {
-    HOST.println(F("Received input from client"));
-    char led = msg[9];
-    char setting = msg[10];
-    if (led >= '1' && led <= '3') {
-      led = led - '1';
-    } else {
+  if (strncmp(msg, "+IPD", 4) == 0) {   // Client message?
+    DEBUG.println(F("Received input from client"));
+    char led = msg[9];                  // Extract the LED number
+    char setting = msg[10];             // Extract the setting (on/off)
+    if (led >= '1' && led <= '3') {     // Check the LED number for validity (i.e. 1, 2 or 3)
+      led = led - '1';                  // if valid, convert to an integer.
+    } else {                            // Otherwise print an error message to the USB.
       HOST.print(F("Invalid LED: ")); HOST.println(led);
       return;
     }
 
-    /************************************* 
-     *  Comment out/Uncomment this block of print
-     *  statements to represent out "development cycle".
-     *************************************/
     DEBUG.print(F("Setting LED ")); DEBUG.print(led);
       DEBUG.print(F(" on DIO ")); DEBUG.print(led + 5);
-      DEBUG.println(setting == "+" ? F(" on") : F(" off"));
-
-    digitalWrite(led + 5, setting == '+');
+      DEBUG.println(setting == '+' ? " on" : " off");
+                                              // FInally, turn the requested LED on or off
+    digitalWrite(led + 5, setting == '+');    // depending upon the value in "setting".
+                                              // The led + 5 adjusts the LED value (0, 1 or 2)
+                                              // to the corresponding Arduino digital I/O pins
+                                              // which that have LED's connected whihc are pins 5, 6 & 7.
   }
   OKseen = strcmp(msg, "OK") == 0;
   ERRORseen = strcmp(msg, "ERROR") == 0;
@@ -228,7 +239,7 @@ boolean accumulateESPData() {
  * Wait for a response of OK, ERROR, FAIL or a TIMEOUT.
  * The timeout period is specified by the toPeriod constant value.
  */
-const unsigned long toPeriod = 30000;    // millis to wait for reply (30 secs).
+const unsigned long ESP_TO_PERIOD = 30000;    // millis to wait for reply (30 secs).
 void sendESP(const char *msg) {
   ESP.print(msg);
   ESP.print("\r\n");
@@ -237,17 +248,17 @@ void sendESP(const char *msg) {
   FAILseen = false;
   TIMEOUTseen = false;
       // Establish the initial timout period.
-  unsigned long timeout = millis() + toPeriod;
+  unsigned long timeout = millis() + ESP_TO_PERIOD;
       // Loop until we get one of the expected replies
       // or a timeout occurs (without getting one of the expected replies)
   while (!OKseen && !ERRORseen && !FAILseen && ! TIMEOUTseen) {
     if (accumulateESPData()) {
             // A response has been recieved.
             // Debug output the status of the expected replies
-      DEBUG.print(F("OK, ERROR, FAIL = "));
+      DEBUG.print(F("O,E,F="));
         DEBUG.print(OKseen); DEBUG.print(ERRORseen);
         DEBUG.println(FAILseen);
-      timeout = millis() + toPeriod;    // message rcvd, reset the timer.
+      timeout = millis() + ESP_TO_PERIOD;    // message rcvd, reset the timer.
     }
     if (millis() >= timeout) {
       TIMEOUTseen = true;
@@ -319,15 +330,16 @@ void setup() {
   DEBUG.println(F("Sending GetVersion"));
   sendESP("AT+GMR");              // Get Version Info.
     // Once off set mode and join the WiFi.
-//  DEBUG.println(F("Setting the mode"));
-//  sendESP("AT+CWMODE=1");         // Set operating mode to "station"
-//  DEBUG.println(F("Connect to my WiFi: HUAWEI-VRCY99"));
-//  sendESP("AT+CWJAP=\"HUAWEI-VRCY99\",\"yourpassword\"");
+  DEBUG.println(F("Setting the mode"));
+  sendESP("AT+CWMODE=1");         // Set operating mode to "station"
+  DEBUG.println(F("Connect to my WiFi"));
+  sendESP("AT+CWJAP=\"YourWiFi\",\"yourpassword\"");
+  
+  DEBUG.println(F("Sending Max Connections=1"));
+  sendESP("AT+CIPMUX=1");         // Enable Server
+  DEBUG.println(F("Sending Start Server on Port 80"));
+  sendESP("AT+CIPSERVER=1,80");   // Open port 80
 
-//  DEBUG.println(F("Sending Max Connections=1"));
-//  sendESP("AT+CIPMUX=1");         // Enable Server
-//  DEBUG.println(F("Sending Start Server on Port 80"));
-//  sendESP("AT+CIPSERVER=1,80");   // Open port 80
   HOST.println(F("Ready"));
   HOST.println();
 }
