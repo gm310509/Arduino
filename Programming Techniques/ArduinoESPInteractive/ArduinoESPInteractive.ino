@@ -308,6 +308,11 @@ void setup() {
   while (!HOST) {
     delay(1);
   }
+  while(!ESP) {
+    delay(1);
+  }
+
+  HOST.println(F("\x1b[2JESP WiFI Test Program"));
 
   HOST.print(F("Version: ")); HOST.println(F(VERSION));
   HOST.print(F("ESP  Ready on: ")); HOST.print(STRING(ESP));
@@ -326,19 +331,25 @@ void setup() {
   pinMode(5, OUTPUT);             // Set some pins to output for LEDs.
   pinMode(6, OUTPUT);
   pinMode(7, OUTPUT);
-
+  
+  DEBUG.println(F("Delaying in hopes the ESP will wake up."));
+  delay(1000);
   DEBUG.println(F("Sending GetVersion"));
   sendESP("AT+GMR");              // Get Version Info.
+  
     // Once off set mode and join the WiFi.
   DEBUG.println(F("Setting the mode"));
   sendESP("AT+CWMODE=1");         // Set operating mode to "station"
-  DEBUG.println(F("Connect to my WiFi"));
-  sendESP("AT+CWJAP=\"YourWiFi\",\"yourpassword\"");
   
-  DEBUG.println(F("Sending Max Connections=1"));
-  sendESP("AT+CIPMUX=1");         // Enable Server
-  DEBUG.println(F("Sending Start Server on Port 80"));
-  sendESP("AT+CIPSERVER=1,80");   // Open port 80
+  DEBUG.println(F("Connect to my WiFi"));
+//  sendESP("AT+CWJAP=\"YourWiFi\",\"yourpassword\"");
+  sendESP("AT+CWJAP=\"XYZZY\",\"SyZyGy6969\"");
+
+  delay(200);
+//  DEBUG.println(F("Sending Max Connections=1"));
+//  sendESP("AT+CIPMUX=1");         // Enable Server
+//  DEBUG.println(F("Sending Start Server on Port 80"));
+//  sendESP("AT+CIPSERVER=1,80");   // Open port 80
 
   HOST.println(F("Ready"));
   HOST.println();

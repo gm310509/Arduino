@@ -66,6 +66,9 @@ const int SensorRight = 3;     //Right sensor input
 int SL;    //Status of Left line track sensor
 int SM;    //Status of Midd line track sensor
 int SR;    //Status of Righ line track sensor
+int SLPrev;    // Previous Status of Left line track sensor
+int SMPrev;    // Previous Status of Midd line track sensor
+int SRPrev;    // Previous Status of Righ line track sensor
 /*************************Define IR pins************************************/
 const int irReceiverPin = 2; //Infrared receiver OUTPUT pin 2
 IRrecv irrecv(irReceiverPin);  // define IRrecv receiver pin
@@ -315,6 +318,21 @@ void ask_pin_R() // measure right
   Serial.println(Rdistance);
   Rspeedd = Rdistance;
 }
+
+int updateLineTracks(int pos, int prev, int curr) {
+  if (prev != curr) {
+    lcd.setCursor(pos, 1);
+    lcd.print(curr);
+  }
+  return curr;
+}
+void updateLineTracks() {
+  SLPrev = updateLineTracks( 3, SLPrev, SL);
+  SMPrev = updateLineTracks( 8, SMPrev, SM);
+  SRPrev = updateLineTracks(13, SRPrev, SR);
+}
+
+
 //******************************************************************************(LOOP)
 void loop()
 {
@@ -325,6 +343,7 @@ void loop()
   //*************************  Remote control mode*****************************************
   if (irrecv.decode(&results)) // If IR receive anything successfully then analysis code
   {
+    irrecv.resume();
     if (results.value == IRfront)//Front
     {
       advance(10);//Advance
@@ -348,13 +367,20 @@ void loop()
     //************************************Track line autorun mode************************************
     if (results.value == IRcny70)
     {
-      //       lcd.clear();
-
+      lcd.clear();
+      lcd.print("Line Track mode");
+      lcd.setCursor(0,1);
+            //   01234567890123
+      lcd.print("SL=  SM=  SR=");
+      SRPrev = SMPrev = SLPrev = -1;      // Force update of LCD status the first time.
       while (IRcny70)
       {
         SL = digitalRead(SensorLeft);
         SM = digitalRead(SensorMiddle);
         SR = digitalRead(SensorRight);
+        
+        updateLineTracks();               // Update the LCD with the current status.
+
         if (SM == HIGH)//middle sensor detects black line
         {
           if (SL == LOW && SR == HIGH) // left white and right black then turn right slowly
@@ -426,6 +452,7 @@ void loop()
         if (irrecv.decode(&results))
         {
           irrecv.resume();
+          Serial.print("IR Recv=");
           Serial.println(results.value, HEX);
           if (results.value == IRstop)
           {
@@ -433,6 +460,7 @@ void loop()
             digitalWrite(MotorRight2, HIGH);
             digitalWrite(MotorLeft1, HIGH);
             digitalWrite(MotorLeft2, HIGH);
+            lcd.clear();
             break;
           }
         }
@@ -560,7 +588,7 @@ void loop()
       digitalWrite(MotorLeft1, LOW);
       digitalWrite(MotorLeft2, LOW);
     }
-    irrecv.resume();    // Continue receive IR command and restart all over again
+//    irrecv.resume();    // Continue receive IR command and restart all over again
   }
 
 

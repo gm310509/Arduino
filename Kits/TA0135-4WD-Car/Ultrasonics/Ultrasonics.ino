@@ -25,12 +25,29 @@ int outputPin= A1; // define ultrasonic signal transmitter pin TRIG to D5
 #endif
 void setup()
 {
-  Serial.begin(9600);
+  Serial.begin(115200);
+  while (!Serial) {
+    delay(1);
+  }
   lcd.init(); // initialize the lcd 
   lcd.backlight();
   pinMode(inputPin, INPUT); pinMode(outputPin,OUTPUT);
   lcd.clear();
   lcd.print("Ultrasonics");
+  Serial.println("Ultrasonics (range finder) - test program");
+  Serial.println("Connections: ");
+  Serial.print("  Input  (echo):    "); 
+  if (inputPin == A0) {
+    Serial.println("A0");
+  } else {
+    Serial.println(inputPin);
+  }
+  Serial.print("  Output (trigger): ");
+  if (outputPin == A1) {
+    Serial.println("A1");
+  } else {
+    Serial.println(outputPin);
+  }
 }
 void loop() {
   int old_distance; 
@@ -48,6 +65,8 @@ void loop() {
     lcd.print("H = ");
     lcd.print(distance);
     lcd.print("    ");
+    Serial.print("H = ");
+    Serial.println(distance);
   }
   delay(200);
 }
