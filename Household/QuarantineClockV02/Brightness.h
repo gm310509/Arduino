@@ -1,3 +1,6 @@
+#ifndef _BRIGHTNESS_LIB
+#define _BRIGHTNESS_LIB
+
 /**
  * Control the brightness of the LED's using a (home made) digipot circuit
  * 
@@ -8,42 +11,74 @@
 
  class Brightness {
   public:
-    Brightness(int ldrPin, int digiPotPins[]) {
-      _ldrPin = ldrPin;
-      for (int i = 0; i < NUM_CONTROL_PINS; i++) {
-        _digiPotPins[i] = digiPotPins[i];
-      }
-      resetLightMetrics();
-    }
-    
+    /**
+     * Brightness Constructor.
+     * Store the control pin specifications and
+     * set the ports as needed.
+     * 
+     * Note: The digiPotPins must be an array of 4 integers in this version.
+     */
+    Brightness(int ldrPin, int digiPotPins[]);
+
+    /**
+     * The exact (i.e. not maximum, but exact) number of digiPot control pins
+     * that must be specified to the constructor.
+     */
     static const int NUM_CONTROL_PINS = 4;
-    
+
+    /**
+     * Reads the LDR and adjusts the brightness according to a
+     * hard coded table of values.
+     */
     int checkLightLevels();
 
+    /*
+     * Return the most recently observed ambient light level.
+     */
     int getLightLevel() {
       return _currentLightLevel;
     }
     
+    /*
+     * Return the lowest observed ambient light level.
+     */
     int getMinLightLevel() {
       return _minLightLevel;
     }
     
+    /*
+     * Return the highest observed ambient light level.
+     */
     int getMaxLightLevel() {
       return _maxLightLevel;
     }
 
+    /*
+     * Reset the light min and max metrics so a new range can be measured.
+     */
     void resetLightMetrics() {
       _minLightLevel = 1024;
       _maxLightLevel = 0;
     }
     
+    /*
+     * Return the current brightness level - i.e. the current digiPot setting.
+     */
     int getBrightnessLevel() {
       return _currentBrightnessLevel;
     }
-
+    
+    /**
+     * Set the brightness level to a number between 0 and NUM_CONTROL_PINS
+     * inclusive.
+     * 
+     * Thus if there are 4 control pins, there will be 5 brightness levels (0, 1, 2, 3 and 4).
+     */
     void setBrightnessLevel(int level);
 
-
+    /**
+     * Print debugging information.
+     */
     void printDebugInfo();
     
 
@@ -56,3 +91,5 @@
     int _ldrPin;
 
 };
+
+#endif
