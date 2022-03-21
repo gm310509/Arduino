@@ -12,6 +12,9 @@
  *    2020-09-26
  * 
  * A simple program built for hotel quarantine.
+ * 
+ * This project is further documented on Instructables at: https://www.instructables.com/Event-Countdown-Clock-Covid-Clock-V20/
+ * 
  * Form some reason, my hotel did not have a clock. I find it very convenient to have a clock
  * so that I can just glance at the current time without having to pick up and activate a handheld device such as
  * a phone or tablet (and I couldn't be bothered putting on my watch every day, and I had nothing better to do while in
@@ -419,11 +422,11 @@ void processCommand() {
 #else
     Serial.println(F("  LED Clock refresh: Best effort polling"));
 #endif
-    Serial.println(F("  Light Levels:"));
-    Serial.print(F("    min: ")); Serial.println(ledBrightness.getMinLightLevel());
-    Serial.print(F("    max: ")); Serial.println(ledBrightness.getMaxLightLevel());
-    Serial.print(F("    now: ")); Serial.println(ledBrightness.getLightLevel());
-    Serial.print(F("  Brightness: ")); Serial.println(ledBrightness.getBrightnessLevel());
+    Serial.println(F("Light Levels:"));
+    Serial.print(F("  min: ")); Serial.println(ledBrightness.getMinLightLevel());
+    Serial.print(F("  max: ")); Serial.println(ledBrightness.getMaxLightLevel());
+    Serial.print(F("  now: ")); Serial.println(ledBrightness.getLightLevel());
+    Serial.print(F("Dimming level: ")); Serial.println(ledBrightness.getDimmingLevel());
     ledBrightness.printDebugInfo();
   } else if (cmdNo == 4) {        // Reset command.
     ledBrightness.resetLightMetrics();

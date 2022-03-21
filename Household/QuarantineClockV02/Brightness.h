@@ -62,19 +62,19 @@
     }
     
     /*
-     * Return the current brightness level - i.e. the current digiPot setting.
+     * Return the current dimming level - i.e. the current digiPot setting.
      */
-    int getBrightnessLevel() {
-      return _currentBrightnessLevel;
+    int getDimmingLevel() {
+      return _currentDimmingLevel;
     }
     
     /**
-     * Set the brightness level to a number between 0 and NUM_CONTROL_PINS
+     * Set the brightness (or amount of dimming) level to a number between 0 and NUM_CONTROL_PINS
      * inclusive.
      * 
      * Thus if there are 4 control pins, there will be 5 brightness levels (0, 1, 2, 3 and 4).
      */
-    void setBrightnessLevel(int level);
+    void setDimmingLevel(int level);
 
     /**
      * Print debugging information.
@@ -84,7 +84,7 @@
 
   private:
     int _digiPotPins[NUM_CONTROL_PINS];
-    int _currentBrightnessLevel = 0;
+    int _currentDimmingLevel = 0;
     int _currentLightLevel = 0;
     int _minLightLevel = 1024;
     int _maxLightLevel = 0;
