@@ -57,6 +57,7 @@
 #define LDR_PIN A0                    /* The pin that the LDR is connected to for measuring ambient light levels */
 #define CLOCK_COLON_DISPLAY_TIME  500 /* How long the clock colon is turned on = 500 millisecond (or 1/2 a second) */
 
+#define EN_ECHO 1                      /* Enable echo on Serial monitor */
 
 /*
  * This is the quarantine end date.
@@ -421,6 +422,11 @@ void processCommand() {
     Serial.println(F("  LED Clock refresh: Interrupt driven"));
 #else
     Serial.println(F("  LED Clock refresh: Best effort polling"));
+#endif
+#if defined(EN_ECHO)
+    Serial.println(F("Serial terminal - echo enabled"));
+#else
+    Serial.println(F("Serial terminal - echo disabled"));
 #endif
     Serial.println(F("Light Levels:"));
     Serial.print(F("  min: ")); Serial.println(ledBrightness.getMinLightLevel());
