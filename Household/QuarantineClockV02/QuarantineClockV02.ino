@@ -31,6 +31,15 @@
  * Additionally with the current design, it assumes that at least one MCU port (port A in this
  * version - DIO pins 22-29 on the Arduino Mega) is fully accessible via the Arduino's Digital I/O connectors.
  * 
+ * Version 2.01.02.00
+ * ==================
+ *  Added additional debug messages to cater for random instances of
+ *  checksum error when restoring date from EEPROM.
+ * 
+ * Version 2.01.01.00
+ * ==================
+ *  Enabled echo for use on putty.
+ * 
  * Version 2.01.00.00
  * ==================
  *  Moved clock display management into a source file of its own (ClockDisplay.c/h).
@@ -49,7 +58,7 @@
  *  Initial Version.
  *  
  */
-#define VERSION "2.01.00.00"
+#define VERSION "2.01.02.00"
 
 
 #define CHECK_TIME_INTERVAL 1000      /* Interval between RTC time checks = 1 second */
@@ -57,7 +66,7 @@
 #define LDR_PIN A0                    /* The pin that the LDR is connected to for measuring ambient light levels */
 #define CLOCK_COLON_DISPLAY_TIME  500 /* How long the clock colon is turned on = 500 millisecond (or 1/2 a second) */
 
-#define EN_ECHO 1                      /* Enable echo on Serial monitor */
+#define EN_ECHO 1                     /* Enable echo on Serial monitor */
 
 /*
  * This is the quarantine end date.
@@ -547,8 +556,10 @@ void setup() {
   Serial.print(",d = "); Serial.print(day);
   Serial.print(",c = "); Serial.println(checksum);
 
-  if ((year + month + day) & 0xff != checksum) {
-    Serial.print(F("*** qdate not set."));
+  int calculatedChecksum = (year + month + day) & 0xff;
+  if (calculatedChecksum != checksum) {
+    Serial.println(F("*** qdate not set."));
+    Serial.print(F("Calculated checksum = ")); Serial.println(calculatedChecksum);
   } else {
     quarantineEndDate = DateTime(year+2000, month, day, 0, 0, 0);
     Serial.print(F("*** qdate: ")); printDate(quarantineEndDate);
