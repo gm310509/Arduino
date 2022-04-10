@@ -466,11 +466,7 @@ void checkControllerInput() {
 #ifdef EN_ECHO
     Serial.print(ch);
 #endif
-    if (ch == '\n') {       // We have a CR which marks the end of the input.
-      buffer[bufferPtr++] = '\0';   // Null terminate the string.
-      processCommand();             // Process the input
-      bufferPtr = 0;                // Reset the buffer Pointer for the next input.
-    } else if (ch == '\r') {
+    if (ch == '\n' || ch == '\r') { // Do we have a line terminator (LF || CR) which marks the end of the input.
       buffer[bufferPtr++] = '\0';   // Null terminate the string.
       processCommand();             // Process the input
       bufferPtr = 0;                // Reset the buffer Pointer for the next input.
