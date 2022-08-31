@@ -19,23 +19,31 @@
 class SubredditStats {
   public:
     /**
+     * 
      * process new data received from the data source.
+     * @param statsText variable contains the CSV data
+     *                  obtained from the proxy.
      */
     virtual void registerInputData(char *statsText) final;
     /**
-     * return the flag indicating whether data has been received or not.
+     * @return the flag indicating whether data has been received or not.
      */
     virtual boolean hasValidData() final {
       return _hasValidData;
     }
     /**
      * Retrieve a metric as a string of characters.
+     * @param the id of the value to be retrieved.
+     * @return the metric as a <em>string</em> of characters.
      */
-    virtual char *getValue(int itemNo) final;
+    virtual const char *getValue(int itemNo) final;
     /**
      * Retrieve a standard label associated with a metric.
+     * The default labels are typically fairly short.
+     * @param the id of the value to be retrieved.
+     * @return a default label for the metric.
      */
-    virtual char *getLabel(int itemNo) final;
+    virtual const char *getLabel(int itemNo) final;
 
     /***************  Display function placeholders **********/
     /**
@@ -52,6 +60,14 @@ class SubredditStats {
     virtual void output(char * msg, int line, int col);
     /**
      * Cause the display contents to be updated.
+     * This is the main "display data" function.
+     * It is called frequently to allow any animation / cycling
+     * and when new data is received.
+     * 
+     * @param newData - true: indicates that new data has been received.
+     *                  false: no new data, but provides an opportunity for
+     *                         the display to be modified with the existing
+     *                         data.
      */
     virtual void updateDisplay(boolean newData);
 

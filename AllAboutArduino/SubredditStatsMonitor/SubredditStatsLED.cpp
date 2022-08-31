@@ -13,11 +13,16 @@
  */
 LedControl ledPanel = LedControl(12,11,10,1);
 
-void SubredditStatsLED::output(char * msg, int line, int col) {
+/**
+ * Output a message at the current cursor position.
+ */void SubredditStatsLED::output(const char * msg, int line, int col) {
   output(msg);
 }
 
-void SubredditStatsLED::output(char * msg) {
+/**
+ * Output a message at the specified position on the screen.
+ */
+void SubredditStatsLED::output(const char * msg) {
   if (!msg) {
     return;
   }
@@ -34,7 +39,11 @@ void SubredditStatsLED::output(char * msg) {
   }
 }
 
-
+/**
+ * Functon to show that the system is being
+ * initialised. This displays dashes that
+ * alternate from one digit to the other.
+ */
 void SubredditStatsLED::outputNoData() {
   static boolean left = true;
   if (left) {
@@ -45,7 +54,11 @@ void SubredditStatsLED::outputNoData() {
   left = !left;
 }
 
-
+/**
+ * Initialise the display.
+ * For the LCD, output a banner and wait for 1 second
+ * to allow people to see it.
+ */
 void SubredditStatsLED::initDisplay() {
     // turn on the LED panel.
   ledPanel.shutdown(0, false);
@@ -54,7 +67,12 @@ void SubredditStatsLED::initDisplay() {
   outputNoData();  
 }
 
-
+/**
+ * Update the display.
+ * This function simply cycles through each of the available
+ * values and displays them.
+ * It does not attempt to display the sub-name.
+ */
 void SubredditStatsLED::updateDisplay(boolean newData) {
 //  SubredditStats::updateDisplay(newData);
 //  Serial.print("update display: LCD: newData = "); Serial.println(newData);

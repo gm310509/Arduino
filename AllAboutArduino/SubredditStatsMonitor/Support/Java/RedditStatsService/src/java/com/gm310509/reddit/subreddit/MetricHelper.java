@@ -20,6 +20,7 @@ import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.Map;
 import java.util.TreeMap;
@@ -106,6 +107,29 @@ public class MetricHelper extends Metric implements Runnable {
     }
     
     
+    private transient Throwable lastException = null;
+
+    /**
+     * Get the value of lastException
+     *
+     * @return the value of lastException
+     */
+    public Throwable getLastException() {
+        return lastException;
+    }
+    
+    private transient LocalDateTime lastExceptionDateTime = null;
+
+    public LocalDateTime getLastExceptionDateTime() {
+        return lastExceptionDateTime;
+    }
+    
+    private transient int exceptionCount = 0;
+
+    public int getExceptionCount() {
+        return exceptionCount;
+    }
+    
 
     private transient boolean shutdown = false;
 
@@ -160,9 +184,7 @@ public class MetricHelper extends Metric implements Runnable {
         LocalDate prevDate = LocalDate.now();
         while (!shutdown) {
             try {
-//                System.out.println("Refresh data");
-
-                // Connect to reddit to get stats.
+            // Connect to reddit to get stats.
                 String urlText = String.format("https://www.reddit.com/r/%s/about.json", getName());
                 URL url = new URL(urlText);
 
@@ -202,13 +224,13 @@ public class MetricHelper extends Metric implements Runnable {
 
                 int subscriberCount = getNumFromReply(objData, "subscribers");
                 int activeUserCount = getNumFromReply(objData, "active_user_count");
-                
+
                 setSubscribers(subscriberCount);
                 setActiveUsers(activeUserCount);
                 LocalDate today = LocalDate.now();
                 addHistory(today, subscriberCount);
                 System.out.printf("Refreshed. Subs: %d, Active: %d\n", subscriberCount, activeUserCount);
-                
+
                 if(!today.equals(prevDate)) {
                     System.out.println("**** Date differs, writting it out to file: " + historyFile.getCanonicalPath());
                     prevDate = today;
@@ -237,17 +259,41 @@ public class MetricHelper extends Metric implements Runnable {
                     fw.close();
                     System.out.printf("%d records written\n", cnt);
                 }
+            } catch (MalformedURLException e) {
+                lastException = e;
+                lastExceptionDateTime = LocalDateTime.now();
+                exceptionCount++;
+                System.out.println("Malformed URL Exception: " + e);
+            } catch (ProtocolException e) {
+                lastException = e;
+                lastExceptionDateTime = LocalDateTime.now();
+                exceptionCount++;
+                System.out.println("Protocol Exception: " + e);
+                e.printStackTrace();
+            } catch (IllegalStateException e) {
+                lastException = e;
+                lastExceptionDateTime = LocalDateTime.now();
+                exceptionCount++;
+                System.out.println("Illegal State Exception: " + e);
+                e.printStackTrace();
+            } catch (IOException e) {
+                lastException = e;
+                lastExceptionDateTime = LocalDateTime.now();
+                exceptionCount++;
+                System.out.println("IO Exception: " + e);
+                e.printStackTrace();
+            } catch (Throwable t) {
+                lastException = t;
+                lastExceptionDateTime = LocalDateTime.now();
+                exceptionCount++;
+                System.out.println("Other exception: " + t);
+                t.printStackTrace();
+            }
 
+            try {
 //                System.out.printf("Sleeping %.2f seconds\n", REFRESH_INTERVAL / 1000.0);
                 Thread.sleep(REFRESH_INTERVAL);
             } catch (InterruptedException e) {
-            } catch (MalformedURLException e) {
-                System.out.println("Malformed URL Exception: " + e);
-            } catch (ProtocolException e) {
-                System.out.println("Protocol Exception: " + e);
-            } catch (IOException e) {
-                System.out.println("IO Exception: " + e);
-                e.printStackTrace();
             }
         }
         System.out.printf("** Stopping refresh data thread for %s\n", getName());

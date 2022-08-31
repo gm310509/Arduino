@@ -40,7 +40,7 @@ public class GetSubRedditMetric extends HttpServlet {
 
         String historyParam = request.getParameter("history");
         String subName = request.getParameter("subName");
-        System.out.println(String.format("name=%s", subName));
+//        System.out.println(String.format("name=%s", subName));
         if (subName != null) {
             subName = subName.toLowerCase();
         } else {

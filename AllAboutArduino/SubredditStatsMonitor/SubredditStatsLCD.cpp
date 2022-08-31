@@ -13,6 +13,11 @@ const int LCD_ENABLE = 4;
 LiquidCrystal lcd = LiquidCrystal(LCD_RS, LCD_RW, LCD_ENABLE, 9, 10, 11, 12);
 // both of the above seem to work. However, it does need the variant that supplies the read/write signal.
 
+/**
+ * Initialise the display.
+ * For the LCD, output a banner and wait for 1 second
+ * to allow people to see it.
+ */
 void SubredditStatsLCD::initDisplay() {
   lcd.begin(16, 2);
   lcd.clear();
@@ -22,12 +27,18 @@ void SubredditStatsLCD::initDisplay() {
   delay(1000);
 }
 
-void SubredditStatsLCD::output(char * msg, int line, int col) {
+/**
+ * Output a message at the specified position on the screen.
+ */
+void SubredditStatsLCD::output(const char * msg, int line, int col) {
   lcd.setCursor(line, col);
   output(msg);
 }
 
-void SubredditStatsLCD::output(char * msg) {
+/**
+ * Output a message at the current cursor position.
+ */
+void SubredditStatsLCD::output(const char * msg) {
   if (!msg) {
     return;
   }
@@ -44,7 +55,20 @@ void SubredditStatsLCD::output(char * msg) {
   lcd.print(msg);
 }
 
-
+/**
+ * Update the display.
+ * 
+ * This function cycles through a series of displays using
+ * both of the lines on the LCD screen.
+ * The cycles are:
+ * Subscribers + active now
+ * Subscribers + new today
+ * Subscribers + new last 7 days
+ * Subscribers + new last 30 days
+ * Subscribers + new last 90 days
+ * SubName + next target
+ * SubName + estimated date to achieve that target.
+ */
 void SubredditStatsLCD::updateDisplay(boolean newData) {
 //  SubredditStats::updateDisplay(newData);
 //  Serial.print("update display: LCD: newData = "); Serial.println(newData);
@@ -67,18 +91,18 @@ void SubredditStatsLCD::updateDisplay(boolean newData) {
 //      Serial.println("'");
     lcd.clear();
     if (messageIndex < 6) { 
-      output(getLabel(1));
-      output(getValue(1));
+      output(getLabel(1));    // For the first 6 cycles, display the
+      output(getValue(1));    // Current subscribers on line 1.
     } else {
-      output(getLabel(8));
-      output(getValue(8));
+      output(getLabel(8));    // For the last couple of cycles, display
+      output(getValue(8));    // The sub-Name on line 1.
     }
-//    lcd.setCursor(0, 1);
+
     output(getLabel(messageIndex), 0, 1);
     output(getValue(messageIndex));
-//    messageIndex = (messageIndex + 1) % MAX_MSG_CNT;
-    if (++messageIndex == MAX_MSG_CNT - 1) {
-      messageIndex = 0;         // Don't attempt to display the subreddit name on the LED display panel.
+
+    if (++messageIndex >= MAX_MSG_CNT - 1) {
+      messageIndex = 0;         // Loop back to the zero'th display line.
     }
   }
 }

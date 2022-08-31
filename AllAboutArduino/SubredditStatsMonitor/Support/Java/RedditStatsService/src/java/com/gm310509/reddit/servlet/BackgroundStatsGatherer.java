@@ -4,6 +4,16 @@
  * 
  * Servlet that is loaded on startup to collect metrics from reddit.
  * 
+ * V1.1.2.0 - 2022-08-25
+ * - Added Exception handler to the Metric Helper to capture malformed
+ *   JSON responses returned from reddit (for example, if the server is
+ *   busy, it will return HTML, not JSON).
+ * - Restructured the exception handling so that there are two levels,
+ *   One for the document handling and one for the Sleep.
+ * - Corrected hyperlink error in the index.html
+ * - Added capture and display of the most recent exception (if any) along
+ *   with a total number of exceptions caught in the metric helper.
+ * 
  * V1.1.1.0 - 2022-08-25
  *   Added capability to load MetricHelpers based upon history files found
  *   in the history directory.
@@ -23,6 +33,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.regex.Matcher;
@@ -40,10 +51,10 @@ import javax.servlet.http.HttpServletResponse;
 @WebServlet(name = "BackgroundStatsGatherer", urlPatterns = {"/BackgroundStatsGatherer"}, loadOnStartup = 10)
 public class BackgroundStatsGatherer extends HttpServlet {
 
+    public static final String WEBAPP_VERSION = "1.1.2.0";
     public static final String HISTORY_PATH_PARAM = "RedditHistoryPath";
     public static final String METRICS_CACHE_PARAM = "metrics";
     public static final String DEFAULT_SUB_NAME = "arduino";
-    public static final String WEBAPP_VERSION = "1.1.1.0";
     
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -65,11 +76,17 @@ public class BackgroundStatsGatherer extends HttpServlet {
             out.println("<head>");
             out.println("<title>Servlet BackgroundStatsGatherer</title>");
             out.println("  <style>");
-            out.println("    body { font-family: \"Times New Roman\", Times, Serif; font-size:6pt; font-weight: normal;}");
+            out.println("    body { font-family: \"Times New Roman\", Times, Serif; font-size:10pt; font-weight: normal;}");
             out.println("  </style>");
             out.println("</head>");
             out.println("<body>");
-            out.println("<h1>Metrics report");
+            
+            out.println("  <h2>Reddit Monitor Web Service</h2>");
+            out.println("  <p>");
+            out.println(String.format("    Version: %s", WEBAPP_VERSION));
+            out.println("  </p>");
+
+            out.println("<h2>Metrics report</h2>");
 
             out.println("<table>");
             out.println("    <th>key</th><th>&nbsp;</th><th>Name</th><th>&nbsp;</th><th>Subscribers</th><th>&nbsp;</th><th>Active</th><th>&nbsp;</th><th>History</th>");
@@ -97,9 +114,26 @@ public class BackgroundStatsGatherer extends HttpServlet {
             }
             out.println("</table>");
 
-            out.println("  <p>");
-            out.println(String.format("    Version: %s", WEBAPP_VERSION));
-            out.println("  </p>");
+            out.println("<h2>Exceptions</h2>");
+            out.println("<table>");
+            out.println("    <th>key</th><th>&nbsp;</th><th>Count</th><th>&nbsp;</th><th>When</th><th>&nbsp;</th><th>Text</th>");
+            out.println("  </tr>");
+            for (String key : metricCache.keySet()) {
+                MetricHelper value = metricCache.get(key);
+                System.out.println("Key: %s = %s ".format(key, value)); 
+                out.println("    <tr>");
+                String dttm = "none";
+                String msg = "n/a";
+                if (value.getLastExceptionDateTime() != null) {
+                    dttm = value.getLastExceptionDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+                    msg = value.getLastException().toString();
+                }
+                out.println(String.format("      <td>%s</td><td>&nbsp;</td><td>%d</td><td>&nbsp;</td><td>%s</td><td>&nbsp;</td><td>%s</td>",
+                        key, value.getExceptionCount(), dttm, msg));
+                out.println("    </tr>");
+            }
+            out.println("</table>");
+
             out.println("</body>");
             out.println("</html>");
         }

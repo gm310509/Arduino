@@ -3,11 +3,16 @@
 
 #include "SubredditStats.h"
 
+/**
+ * Display driver for subreddit metrics on
+ * an LED device.
+ * It is assumed this device has at least 8 digits.
+ */
 class SubredditStatsLED : public SubredditStats {
   public:
     void updateDisplay(boolean newData);
-    void output(char * msg);
-    void output(char * msg, int line, int col);
+    void output(const char * msg);
+    void output(const char * msg, int line, int col);
     void initDisplay();
 
   private:

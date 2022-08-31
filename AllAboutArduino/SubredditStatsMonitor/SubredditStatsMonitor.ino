@@ -23,18 +23,22 @@
  *   Initial release.
  */
 
+// Include our display devices
 #include "SubredditStatsLCD.h"
 #include "SubredditStatsLED.h"
 
+// Define the type of device we wish to use.
+SubredditStatsLCD subredditStats = SubredditStatsLCD();
+//SubredditStatsLED subredditStats = SubredditStatsLED();
+
+// Values used to process input received over the Serial connection.
 #define EN_ECHO
 #define BUF_SIZE 80
 char inBuf[BUF_SIZE];
 int buffPtr = 0;
 
-const char * VERSION = "1.1.0.1";
-
-//SubredditStatsLCD subredditStats = SubredditStatsLCD();
-SubredditStatsLED subredditStats = SubredditStatsLED();
+// The version of the Arduino code.
+const char * VERSION = "1.01.00.01";
 
 /**
  * We have received some new data from the data source.
@@ -48,8 +52,9 @@ void processCommand(char *cmd, int charCnt) {
 /*
  * Check to see if there is any input on Serial.
  * 
- * If so, accumulate the input up to a Carriage Return (CR).
- * Once a CR has been received the input is processed.
+ * If so, accumulate the input up to a Carriage Return (CR)
+ * or Line Feed (LF).
+ * Once a CR or LF has been received the input is processed.
  */
 void checkControllerInput() {
   if (Serial.available() > 0) {
@@ -81,7 +86,7 @@ void checkControllerInput() {
 
 /**
  * Standard Arduino setup function.
- * Print some welcoming messages and invoke the initDisplay method.
+ * Print some startup messages and invoke the initDisplay method.
  */
 void setup() {
   Serial.begin(115200);
@@ -92,8 +97,15 @@ void setup() {
   Serial.println("By: gm310509");
   Serial.println("    18-08-2022");
   Serial.print  ("Version: "); Serial.println(VERSION);
+  /**
+   * CRITICAL - do not change the following print statement in any way.
+   * 
+   * The word "Ready" is used by the python proxy script to determine
+   * that the Arduino is online and ready to go.
+   */
   Serial.println("Ready");
 
+  // Notify the display to initialise itself if it needs to.
   subredditStats.initDisplay();
 }
 
