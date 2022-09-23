@@ -64,7 +64,8 @@ void SubredditStatsLED::initDisplay() {
   ledPanel.shutdown(0, false);
   ledPanel.setIntensity(0, 3);
   ledPanel.clearDisplay(0);
-  outputNoData();  
+  outputNoData();
+  Serial.println("Initialised LED");
 }
 
 /**

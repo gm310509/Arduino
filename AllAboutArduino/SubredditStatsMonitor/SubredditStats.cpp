@@ -94,6 +94,7 @@ const char *SubredditStats::getLabel(int itemNo) {
  * This function should be overriden by a display module (if needed).
  */
 void SubredditStats::initDisplay() {
+  Serial.println("No display Initialised");
 }
 
 

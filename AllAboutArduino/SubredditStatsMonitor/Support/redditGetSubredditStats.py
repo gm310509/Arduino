@@ -4,6 +4,10 @@
 # This script gets data from the reddit metrics server and
 # relays it to a connected device for display.
 #
+# V?.??.??.?? - yyyy-mm-dd
+#  - Corrected problem where status message was using "90 days ago" subscriber count
+#    when calculating last 30 days new value.
+#
 # V1.0.1.0 - 2022-08-25
 #    Updated to output the subreddit name to the connected device.
 #
@@ -261,7 +265,7 @@ with serial.Serial(arduinoPort, arduinoBaud, timeout=1) as arduino:
 
       # Output what we have calculated
       print(f"dailyRate = {dailyRate}")
-      print(f"at: {now}, active: {activeUserCount}, subscribers: {subscribers:,}, NEW: since yesterday: {calcSubscriberDifference(subscribers, yesterdaySubscribers)}, last 7 days {calcSubscriberDifference(subscribers, lastSevenDaysSubscribers)}, last 30 days {calcSubscriberDifference(subscribers, lastNinetyDaysSubscribers)}, last 90 days: {calcSubscriberDifference(subscribers, lastNinetyDaysSubscribers)}, {nextTarget:,} subscribers estimate: {estimatedTargetDate}, {estimatedDaysTo500K} days, daily rate: {round(dailyRate,2)}")
+      print(f"at: {now}, active: {activeUserCount}, subscribers: {subscribers:,}, NEW: since yesterday: {calcSubscriberDifference(subscribers, yesterdaySubscribers)}, last 7 days {calcSubscriberDifference(subscribers, lastSevenDaysSubscribers)}, last 30 days {calcSubscriberDifference(subscribers, lastThirtyDaysSubscribers)}, last 90 days: {calcSubscriberDifference(subscribers, lastNinetyDaysSubscribers)}, {nextTarget:,} subscribers estimate: {estimatedTargetDate}, {estimatedDaysTo500K} days, daily rate: {round(dailyRate,2)}")
 
       # And if the arduino is active, send the data to it for display.
       if arduinoOnline:
@@ -277,6 +281,6 @@ with serial.Serial(arduinoPort, arduinoBaud, timeout=1) as arduino:
     # Handle any communication/connection errors.
     except requests.exceptions.ConnectionError as e:
       print("Error submitting request: {requestText}")
-      print("error: {e}")
-      print("code: {e.errno}")
-      print("text: {e.strerror}")
+      print(f"error: {e}")
+      print(f"code: {e.errno}")
+      print(f"text: {e.strerror}")

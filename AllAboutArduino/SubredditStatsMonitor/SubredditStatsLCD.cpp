@@ -24,6 +24,7 @@ void SubredditStatsLCD::initDisplay() {
   lcd.noCursor();
   output("subreddit");
   output("monitor", 0, 1);
+  Serial.println("Initialised LCD");
   delay(1000);
 }
 
