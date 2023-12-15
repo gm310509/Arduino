@@ -24,7 +24,7 @@ import datetime
 import time
 import serial
 
-VERSION = "1.0.1.0"
+VERSION = "1.0.1.1"
 
 # Declare an empty dictionary to hold the historical
 # subscription numbers
@@ -83,18 +83,30 @@ print(f"Version: {VERSION}\n")
 subreddit = "Arduino"       # Subreddit to monitor - default is r/Arduino
 arduinoPort = None
 arduinoBaud = None
+nextTarget = 0        # A target value for a milestone - e.g. a sub with 550,000 users might have a target of 600,000
 
 # Check command line arguments
 if len(sys.argv) >= 3:      # Ensure that we have at least the port and baud.
   arduinoPort = sys.argv[1]
   arduinoBaud = sys.argv[2]
 else:
-  print(f"{os.path.basename(sys.argv[0])} port speed [subreddit name]")
+  print(f"{os.path.basename(sys.argv[0])} port speed [subreddit name] [target subscribers]")
+  print("where:")
+  print("  subreddit name: is the name of the subreddit to monitor - without the /r.")
+  print("               default: Arduino")
+  print("  target subscribers: is a number that is initially used as the target for estimating a subscriber count milestone.")
+  print("               default: Calculated based upon the current number of subscribers.")
   sys.exit(1)
 
 # Check for an optional third parameter - the name of an alternative subreddit to monitor.
-if len(sys.argv) == 4:
+if len(sys.argv) >= 4:
   subreddit = sys.argv[3]
+
+# Check for an optional fourth parameter - the milestone to start with (if reasonable).
+if len(sys.argv) == 5:
+  nextTarget = int(sys.argv[4])
+  print(f"Setting nextTarget to {nextTarget}")
+
 
 # echo the operational parameters.
 print(f"Arduino: {arduinoPort} at {arduinoBaud} for {subreddit}")
@@ -109,6 +121,7 @@ headers = {'User-Agent': userAgent}
 requestParameters = {}
 
 #requestText = "http://localhost:8084/RedditStatsService/GetSubRedditMetric?subName={}".format(subreddit)       # for debugging/testing only.
+#requestText = "http://localhost:8080/RedditStatsService/GetSubRedditMetric?subName={}".format(subreddit)       # for debugging/testing only.
 requestText = "http://www.gm310509.com:8080/RedditStatsService/GetSubRedditMetric?subName={}".format(subreddit)
 historyText = "&history=1"              # Our first call will request history. This string is tacked onto the end of the requestText.
 
@@ -251,7 +264,7 @@ with serial.Serial(arduinoPort, arduinoBaud, timeout=1) as arduino:
         dailyRate = dailyRate + calcSubscriberDifference(baseSubscribers, lastNinetyDaysSubscribers) / 90
         rateCount = rateCount + 1
 
-      estimatedDaysTo500K = None
+      estimatedDaysToTarget = None
       estimatedTargetDate = None
 
       # Calculate a target value based upon the "scale" of the current subscriber count.
@@ -259,18 +272,19 @@ with serial.Serial(arduinoPort, arduinoBaud, timeout=1) as arduino:
       # alternatively if the current count is 1,234, then this should result in 2,000.
       # and so on.
       # the target is held in the nextTarget variable.
-      subscribersMagnitude = int(math.log10(subscribers))
-      nextTarget = (int(subscribers / pow(10, subscribersMagnitude)) + 1) * pow(10, subscribersMagnitude)
+      if subscribers >= nextTarget:
+        subscribersMagnitude = int(math.log10(subscribers))
+        nextTarget = (int(subscribers / pow(10, subscribersMagnitude)) + 1) * pow(10, subscribersMagnitude)
 
       # if we have some history and thus have a dailyRate, calculate the estimated target date values.
       if dailyRate > 0:
         dailyRate = dailyRate / rateCount
-        estimatedDaysTo500K = round((nextTarget - baseSubscribers) / dailyRate, 2)
-        estimatedTargetDate = todayDate + datetime.timedelta(days = round(estimatedDaysTo500K))
+        estimatedDaysToTarget = round((nextTarget - baseSubscribers) / dailyRate, 2)
+        estimatedTargetDate = todayDate + datetime.timedelta(days = round(estimatedDaysToTarget))
 
       # Output what we have calculated
       print(f"dailyRate = {dailyRate}")
-      print(f"at: {now}, active: {activeUserCount}, subscribers: {subscribers:,}, NEW: since yesterday: {calcSubscriberDifference(subscribers, yesterdaySubscribers)}, last 7 days {calcSubscriberDifference(subscribers, lastSevenDaysSubscribers)}, last 30 days {calcSubscriberDifference(subscribers, lastThirtyDaysSubscribers)}, last 90 days: {calcSubscriberDifference(subscribers, lastNinetyDaysSubscribers)}, {nextTarget:,} subscribers estimate: {estimatedTargetDate}, {estimatedDaysTo500K} days, daily rate: {round(dailyRate,2)}")
+      print(f"at: {now}, active: {activeUserCount}, subscribers: {subscribers:,}, NEW: since yesterday: {calcSubscriberDifference(subscribers, yesterdaySubscribers)}, last 7 days {calcSubscriberDifference(subscribers, lastSevenDaysSubscribers)}, last 30 days {calcSubscriberDifference(subscribers, lastThirtyDaysSubscribers)}, last 90 days: {calcSubscriberDifference(subscribers, lastNinetyDaysSubscribers)}, {nextTarget:,} subscribers estimate: {estimatedTargetDate}, {estimatedDaysToTarget} days, daily rate: {round(dailyRate,2)}")
 
       # And if the arduino is active, send the data to it for display.
       if arduinoOnline:
