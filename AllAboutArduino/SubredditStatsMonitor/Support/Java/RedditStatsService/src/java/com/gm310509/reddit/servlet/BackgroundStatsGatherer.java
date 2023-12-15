@@ -51,7 +51,7 @@ import javax.servlet.http.HttpServletResponse;
 @WebServlet(name = "BackgroundStatsGatherer", urlPatterns = {"/BackgroundStatsGatherer"}, loadOnStartup = 10)
 public class BackgroundStatsGatherer extends HttpServlet {
 
-    public static final String WEBAPP_VERSION = "1.1.2.0";
+    public static final String WEBAPP_VERSION = "1.1.3.0";
     public static final String HISTORY_PATH_PARAM = "RedditHistoryPath";
     public static final String METRICS_CACHE_PARAM = "metrics";
     public static final String DEFAULT_SUB_NAME = "arduino";
@@ -88,20 +88,32 @@ public class BackgroundStatsGatherer extends HttpServlet {
 
             out.println("<h2>Metrics report</h2>");
 
-            out.println("<table>");
-            out.println("    <th>key</th><th>&nbsp;</th><th>Name</th><th>&nbsp;</th><th>Subscribers</th><th>&nbsp;</th><th>Active</th><th>&nbsp;</th><th>History</th>");
-            out.println("  </tr>");
             HashMap<String, MetricHelper> metricCache = (HashMap) getServletContext().getAttribute(METRICS_CACHE_PARAM);
-            for (String key : metricCache.keySet()) {
-                Metric value = metricCache.get(key);
-                out.println("    <tr>");
-                out.println(String.format("      <td>%s</td><td>&nbsp;</td><td>%s</td><td>&nbsp;</td><td>%d</td><td>&nbsp;</td><td>%d</td><td>&nbsp;</td><td>%d</td>",
-                        key, value.getName(), value.getSubscribers(), value.getActiveUsers(), value.getSubscriberHistory().size()));
-                out.println("    </tr>");
+            if (metricCache != null) {
+                out.println("<table>");
+                out.println("    <th>key</th><th>&nbsp;</th><th>Name</th><th>&nbsp;</th><th>Subscribers</th><th>&nbsp;</th><th>Active</th><th>&nbsp;</th><th>History</th>");
+                out.println("  </tr>");
+                for (String key : metricCache.keySet()) {
+                    Metric value = metricCache.get(key);
+                    out.println("    <tr>");
+                    out.println(String.format("      <td>%s</td><td>&nbsp;</td><td>%s</td><td>&nbsp;</td><td>%d</td><td>&nbsp;</td><td>%d</td><td>&nbsp;</td><td><a href=GetSubRedditMetric?subName=%s&history=1>%d</a></td>",
+                            key, value.getName(), value.getSubscribers(), value.getActiveUsers(), key, value.getSubscriberHistory().size()));
+                    out.println("    </tr>");
+                }
+                out.println("</table>");
+                out.println("<p>");
+                out.println(String.format("Total: %d subs being monitored", metricCache.size()));
+                if (metricCache.isEmpty()) {
+                    out.println(String.format("<br>No subreddits are being monitored - perhaps check that the %s context parameter is set in the server (or App) context.<br>", HISTORY_PATH_PARAM));
+                }
+                out.println("</p>");
+            } else {
+                out.println("<p>");
+                out.println(String.format("No metrics cache found - perhaps the path (%s) has not been set in the server (or App) context?", HISTORY_PATH_PARAM));
+                out.println("</p>");
             }
-            out.println("</table>");
 
-            out.println("<p>Context parameters</p>");
+            out.println("<h2>Context parameters</h2>");
             out.println("<table>");
             out.println("    <th>key</th><th>&nbsp;</th><th>Value</th>");
             out.println("  </tr>");
@@ -179,45 +191,50 @@ public class BackgroundStatsGatherer extends HttpServlet {
             getServletContext().setAttribute(METRICS_CACHE_PARAM, metricCache);
         }
         String historyPathName = getServletContext().getInitParameter(HISTORY_PATH_PARAM);
-        File historyPath = new File(historyPathName);
-        Pattern subRedditFromHistoryFile = Pattern.compile("r-(.+?)-subscribers.txt$");
-     
         System.out.println(String.format("\nDetecting subreddit history files in %s", historyPathName));
-        for (File f : historyPath.listFiles(new FilenameFilter() {
-            @Override       // Accept the file if it looks like "r-subname-subscribers.txt".
-            public boolean accept(File dir, String name) {
-                return name.startsWith("r-") && name.endsWith("-subscribers.txt");
-            }
-        }) ) {
-            System.out.println(String.format("Found: %s", f.getAbsolutePath()));
+        
+        if (historyPathName != null) {
+            File historyPath = new File(historyPathName);
+            Pattern subRedditFromHistoryFile = Pattern.compile("r-(.+?)-subscribers.txt$");
 
-            String fileName = f.getName();
-            Matcher nameMatcher = subRedditFromHistoryFile.matcher(fileName);
-            if (nameMatcher.find()) {
-                String subName = nameMatcher.group(1);
-                String subNameLower = subName.toLowerCase();
-                System.out.println(String.format("%s - %s", fileName, subName));
-
-                MetricHelper metric = metricCache.get(subNameLower);
-                if (metric == null) {
-                    System.out.println(String.format("new metricHelper(%s)", subName));
-                    metric = new MetricHelper(subName);
-                    
-                    File historyFile = new File(historyPathName, fileName);
-                    try {
-                        int recCount = metric.loadHistory(historyFile);
-                        System.out.printf("%d history records loaded.\n", recCount);
-                    } catch (Exception e) {
-                        System.out.printf("Exception loading history data from: %s\n", historyFile);
-                        e.printStackTrace();
-                    }
-                    metricCache.put(subNameLower, metric);
-                } else {
-                    System.out.printf("Metric '%s' already exists \n", metric);
+            for (File f : historyPath.listFiles(new FilenameFilter() {
+                @Override       // Accept the file if it looks like "r-subname-subscribers.txt".
+                public boolean accept(File dir, String name) {
+                    return name.startsWith("r-") && name.endsWith("-subscribers.txt");
                 }
-            } else {
-                System.out.println(String.format("%s - no match in regex", fileName));
+            }) ) {
+                System.out.println(String.format("Found: %s", f.getAbsolutePath()));
+
+                String fileName = f.getName();
+                Matcher nameMatcher = subRedditFromHistoryFile.matcher(fileName);
+                if (nameMatcher.find()) {
+                    String subName = nameMatcher.group(1);
+                    String subNameLower = subName.toLowerCase();
+                    System.out.println(String.format("%s - %s", fileName, subName));
+
+                    MetricHelper metric = metricCache.get(subNameLower);
+                    if (metric == null) {
+                        System.out.println(String.format("new metricHelper(%s)", subName));
+                        metric = new MetricHelper(subName);
+
+                        File historyFile = new File(historyPathName, fileName);
+                        try {
+                            int recCount = metric.loadHistory(historyFile);
+                            System.out.printf("%d history records loaded.\n", recCount);
+                        } catch (Exception e) {
+                            System.out.printf("Exception loading history data from: %s\n", historyFile);
+                            e.printStackTrace();
+                        }
+                        metricCache.put(subNameLower, metric);
+                    } else {
+                        System.out.printf("Metric '%s' already exists \n", metric);
+                    }
+                } else {
+                    System.out.println(String.format("%s - no match in regex", fileName));
+                }
             }
+        } else {
+            System.out.println(String.format("*** ERROR: The history path is null. Please ensure that the %s parameter is set in the server (or App) context.",HISTORY_PATH_PARAM));
         }
     }
 

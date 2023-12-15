@@ -5,6 +5,7 @@
  */
 package com.gm310509.reddit.servlet;
 
+import com.gm310509.reddit.adapter.LocalDateTypeAdapter;
 import com.gm310509.reddit.subreddit.Metric;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -15,6 +16,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.google.gson.*;
+import java.time.LocalDate;
 import java.util.HashMap;
 
 /**
@@ -48,7 +50,7 @@ public class GetSubRedditMetric extends HttpServlet {
         }
 
         boolean returnHistory = historyParam != null;
-        Metric metric = new Metric("No Data");;
+        Metric metric = new Metric("No Data");
         HashMap<String, Metric> metricCache = (HashMap) getServletContext().getAttribute(BackgroundStatsGatherer.METRICS_CACHE_PARAM);
         if (metricCache != null) {
             Metric m = metricCache.get(subName);
@@ -59,7 +61,9 @@ public class GetSubRedditMetric extends HttpServlet {
             System.out.println("Creating a new \"no data\" metric.");
         }
         System.out.println(String.format("Metric: %s", metric.toString()));
-        Gson gson = new Gson();
+        Gson gson = new GsonBuilder().setPrettyPrinting()
+                .registerTypeAdapter(LocalDate.class, new LocalDateTypeAdapter())
+                .create();
         String replyText;
         String contentType = "application/json;charset=UTF-8";
                         // Use "text/csv" if we return CSV data.
