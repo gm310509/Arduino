@@ -134,6 +134,11 @@ with serial.Serial(arduinoPort, arduinoBaud, timeout=1) as arduino:
           print(inBuf)                # print the input received so we can read it.
           if (inBuf == "Ready"):      # Check if the input is Ready (which the Arduino sends on startup).
             arduinoOnline = True      # Mark that the Arduino is not online.
+            
+            #TODO: Consider commenting this out to deal with the scenario where
+            #      Arduino sends a ready, but we haven't received our first packet of
+            #      data yet.
+            #      Alternatively, add a new message type of "no data" or "error".
             sendArduinoData(arduino,
                 activeUserCount, subscribers,
                 calcSubscriberDifference(subscribers, yesterdaySubscribers),

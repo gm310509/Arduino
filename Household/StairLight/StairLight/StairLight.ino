@@ -35,7 +35,10 @@
 #ifdef DEBUG
   #define LIGHT_ON_THRESHOLD 700
 #else
-  #define LIGHT_ON_THRESHOLD 200
+//  #define LIGHT_ON_THRESHOLD 200
+//  #define LIGHT_ON_THRESHOLD 275
+  #define LIGHT_ON_THRESHOLD 300
+//  #define LIGHT_ON_THRESHOLD 500
 #endif
 
 
@@ -83,7 +86,9 @@ unsigned int faderTime = FADE_ON_TIME;  // will be set to either FADE_ON_TIME or
                                         // whether we are turning the LED's on or off.
 unsigned int faderDelayTmr = 0;   // A counter to measure how long since we last adjusted the LED brightness.
 
-#define LIGHT_CHECK_TIME 1000     // Check the ambient light level once every 1000 ms (once per second)
+//#define LIGHT_CHECK_TIME 1000     // Check the ambient light level once every 1000 ms (once per second)
+#define LIGHT_CHECK_TIME 5*60*1000L    //Check the ambient light level once every 5 minutes.
+
 unsigned int lightCheckTmr = 0;   // A counter to measure how long since we last reported the ambient light level.
 
 /*****************************************************************************
@@ -121,6 +126,7 @@ void setup() {
   }
   Serial.println();
 
+  Serial.print(F("LDR threshold: ")); Serial.println(LIGHT_ON_THRESHOLD);
   // Blink the led strip and builtin once for each PIR configured as
   // visual feedback during startup.
   for (int i = 0; i < pirCount; i++) {
@@ -199,7 +205,7 @@ int checkPirArray() {
     int triggeredInd = digitalRead(pirPins[i]);   // Read the PIR
     if (triggeredInd) {                           // Is it triggered (i.e. triggeredInd is HIGH)?
 #ifdef DEBUG
-      Serial.print("pir "); Serial.print(i); Serial.print(F(" (DIO pin ")); Serial.print(pirPins[i]); Serial.println(F(") triggered."));
+      //Serial.print("pir "); Serial.print(i); Serial.print(F(" (DIO pin ")); Serial.print(pirPins[i]); Serial.println(F(") triggered."));
 #endif
       return HIGH;                                // Yes, it is triggered, we only need one, so return immediately with a "motion detected" status.
     }
@@ -242,7 +248,8 @@ void processPir() {
   if (pirTriggeredInd != pirState) {            // has the motion status changed since we last checked?
     pirState = pirTriggeredInd;                 // Yes, PIR state has changed, so record this new state for subsequent state change checking.
     if (pirState == HIGH) { // Has the PIR detected motion?
-      Serial.println("Motion Detected");        // Yep!
+      //Serial.print(F("Motion Detected. "));          // Yep!
+      processLightCheck();  // report the light level.-
                             // Signal that motion has been detected by turning the BUILTIN_LED on.
       digitalWrite(LED_BUILTIN, HIGH);
                             // Determine if we need to turn on the LED Strip.
@@ -253,7 +260,7 @@ void processPir() {
         fadeOn();           // initiate the turn LED's on sub-task
       }
     } else {                // Motion no longer detected.
-      Serial.println("Motion ended");
+      //Serial.println(F("Motion ended"));
                             // Signal that motion is no longer detected by turning the BUILTIN_LED off.
       digitalWrite(LED_BUILTIN, LOW);
       fadeOff();            // initiate the turn LED's off sub-task
@@ -269,6 +276,7 @@ void fadeOn() {
   fadeDisabled = false;       // Enable the fader sub-task.
   fadeUp = true;              // Set the direction to "turn on LED's" (i.e. "get brighter").
   faderTime = FADE_ON_TIME;   // Set the timer threshold that controls how frequently we increase the brightness.
+//  Serial.println(F("Fade on"));
 }
 
 /*************************************
@@ -279,6 +287,7 @@ void fadeOff() {
   fadeDisabled = false;       // Enable the fader sub-task.
   fadeUp = false;             // Set the direction to "turn off LED's" (i.e. "get dimmer").
   faderTime = FADE_OFF_TIME;  // Set the timer threshold that controls how frequently we decrease the brightness.
+//  Serial.println("Fade off");
 }
 
 /*************************************
@@ -350,6 +359,8 @@ int getLightLevel() {
  */
 void processLightCheck() {
   int lightLevel = getLightLevel();
-  Serial.print("Light level: ");
-  Serial.println(lightLevel);
+  //Serial.print("LLl: ");
+  //Serial.print(lightLevel);
+  //Serial.print(", t=");
+  //Serial.println(LIGHT_ON_THRESHOLD);
 }

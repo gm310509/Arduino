@@ -16,7 +16,8 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 /**
- *
+ * Adapter to allow GSON to Serialise the LocalDate attribute used in the Metric object.
+ * 
  * @author gm310509
  */
 public class LocalDateTypeAdapter
