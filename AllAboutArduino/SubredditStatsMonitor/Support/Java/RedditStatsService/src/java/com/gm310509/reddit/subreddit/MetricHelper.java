@@ -6,6 +6,7 @@
 package com.gm310509.reddit.subreddit;
 
 import static com.gm310509.reddit.subreddit.Metric.HISTORY_MAX;
+import com.gm310509.reddit.utility.Token;
 import com.google.gson.Gson;
 import java.io.BufferedReader;
 import java.io.File;
@@ -22,6 +23,7 @@ import java.net.URL;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -177,6 +179,13 @@ public class MetricHelper extends Metric implements Runnable {
         return result;
     }
 
+    private String getBearerAuthenticationHeader(String token) {
+//        String valueToEncode = token;
+//        return "Bearer " + Base64.getEncoder().encodeToString(valueToEncode.getBytes());
+        return "Bearer " + token;
+    }
+
+    private transient Token token = new Token();
     
     @Override
     public void run() {
@@ -185,80 +194,105 @@ public class MetricHelper extends Metric implements Runnable {
         while (!shutdown) {
             try {
             // Connect to reddit to get stats.
-                String urlText = String.format("https://www.reddit.com/r/%s/about.json", getName());
+                String urlText = String.format("https://oauth.reddit.com/r/%s/about.json", getName());
                 URL url = new URL(urlText);
+                StringBuilder responseContent;
+                int retryCnt = 0;
+                int errorCode = 0;
+                do {
+                    token.redditGetToken(retryCnt != 0);
+                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("GET");
+                    conn.setConnectTimeout(5000);           // 5000 ms = 5 seconds
+                    conn.setReadTimeout(5000);
+                    conn.setRequestProperty("User-Agent", "statsMon/0.0.1");
+                    conn.setRequestProperty("Authorization", getBearerAuthenticationHeader(token.getToken()));
 
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("GET");
-                conn.setConnectTimeout(5000);           // 5000 ms = 5 seconds
-                conn.setReadTimeout(5000);
-                conn.setRequestProperty("User-Agent", "statsMon/0.0.1");
+                    // Read reply.
+                    BufferedReader reader;
+                    String line;
+                    int status = conn.getResponseCode();
+                    if (status >= 300) {
+                        reader = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+                    }
+                    else {
+                        reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    }
 
-                // Read reply.
-                BufferedReader reader;
-                String line;
-                StringBuilder responseContent = new StringBuilder();
-                int status = conn.getResponseCode();
-                if (status >= 300) {
-                    reader = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
-                }
-                else {
-                    reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                }
-
-                while ((line = reader.readLine()) != null) {
+                    responseContent = new StringBuilder();
+                    while ((line = reader.readLine()) != null) {
                         responseContent.append(line);
-                }
-                reader.close();
+                    }
+                    reader.close();
 
-                if (status >= 300) {
-                    System.out.println(responseContent.toString());
-                }
+                    if (status >= 300) {
+                        System.out.println(responseContent.toString());
+                    }
+                
+                    String jsonText = responseContent.toString();
+//                    System.out.println("Metric Helper: " + getName() + " response:");
+//                    System.out.println(jsonText);
+                    StringReader jsonStringReader = new StringReader(jsonText);
+                    Gson gson = new Gson();
+                    Map<?,?> map = gson.fromJson(jsonStringReader, Map.class);
 
-                String jsonText = responseContent.toString();
-                StringReader jsonStringReader = new StringReader(jsonText);
-                Gson gson = new Gson();
-                Map<?,?> map = gson.fromJson(jsonStringReader, Map.class);
+                    if (map.containsKey("data")) {
+                        Object objData = map.get("data");
 
-                Object objData = map.get("data");
+                        int subscriberCount = getNumFromReply(objData, "subscribers");
+                        int activeUserCount = getNumFromReply(objData, "active_user_count");
 
-                int subscriberCount = getNumFromReply(objData, "subscribers");
-                int activeUserCount = getNumFromReply(objData, "active_user_count");
+                        setSubscribers(subscriberCount);
+                        setActiveUsers(activeUserCount);
+                        LocalDate today = LocalDate.now();
+                        addHistory(today, subscriberCount);
+                        System.out.printf("Refreshed. Subs: %d, Active: %d\n", subscriberCount, activeUserCount);
 
-                setSubscribers(subscriberCount);
-                setActiveUsers(activeUserCount);
-                LocalDate today = LocalDate.now();
-                addHistory(today, subscriberCount);
-                System.out.printf("Refreshed. Subs: %d, Active: %d\n", subscriberCount, activeUserCount);
+                        if(!today.equals(prevDate)) {
+                            System.out.println("**** Date differs, writting it out to file: " + historyFile.getCanonicalPath());
+                            prevDate = today;
 
-                if(!today.equals(prevDate)) {
-                    System.out.println("**** Date differs, writting it out to file: " + historyFile.getCanonicalPath());
-                    prevDate = today;
-
-                    File backupFile = new File(historyFile.getCanonicalPath() + ".bak");
-                    if (backupFile.exists()) {
-                        System.out.println("Backup file exists - removing");
-                        backupFile.delete();
+                            File backupFile = new File(historyFile.getCanonicalPath() + ".bak");
+                            if (backupFile.exists()) {
+                                System.out.println("Backup file exists - removing");
+                                backupFile.delete();
+                            } else {
+                                System.out.println("No backup file");
+                            }
+                            if (historyFile.exists()) {
+                                System.out.printf("History file exists - renaming to backup: %s\n", backupFile.getCanonicalPath());
+                                historyFile.renameTo(backupFile);
+                            } else {
+                                System.out.println("No history file");
+                            }
+                            FileWriter fw = new FileWriter(historyFile);
+                            int cnt = 0;
+                            for (LocalDate date : getSubscriberHistory().keySet()) {
+                                Integer value = getSubscriberHistory().get(date);
+                                String record = String.format("%s,%d\n", date.toString(), value);
+                                fw.write(record);
+                                cnt++;
+                            }
+                            fw.close();
+                            System.out.printf("%d records written\n", cnt);
+                        }
+                    } else if (map.containsKey("error")) {
+                        errorCode = ((Double) map.get("error")).intValue();
+                        String msg = "unknown error";
+                        if (map.containsKey("message")) {
+                            msg = (String) map.get("message");
+                        }
+                        System.out.println(String.format("Error in reddit response to request for subreddit metadata (about.json): %d - %s", errorCode, msg));
                     } else {
-                        System.out.println("No backup file");
+                        System.out.println("Result from reddit does not contain a data element. Top level keys in response:");
+                        errorCode = -1;
+                        Iterator it = map.keySet().iterator();
+                        while (it.hasNext()) {
+                            System.out.println("  " + it.next());
+                        }
                     }
-                    if (historyFile.exists()) {
-                        System.out.printf("History file exists - renaming to backup: %s\n", backupFile.getCanonicalPath());
-                        historyFile.renameTo(backupFile);
-                    } else {
-                        System.out.println("No history file");
-                    }
-                    FileWriter fw = new FileWriter(historyFile);
-                    int cnt = 0;
-                    for (LocalDate date : getSubscriberHistory().keySet()) {
-                        Integer value = getSubscriberHistory().get(date);
-                        String record = String.format("%s,%d\n", date.toString(), value);
-                        fw.write(record);
-                        cnt++;
-                    }
-                    fw.close();
-                    System.out.printf("%d records written\n", cnt);
-                }
+                    retryCnt++;
+                } while (errorCode != 0 && retryCnt < 2);
             } catch (MalformedURLException e) {
                 lastException = e;
                 lastExceptionDateTime = LocalDateTime.now();

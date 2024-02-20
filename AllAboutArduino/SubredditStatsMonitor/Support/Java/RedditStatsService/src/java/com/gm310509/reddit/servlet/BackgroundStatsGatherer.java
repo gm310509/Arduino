@@ -51,7 +51,7 @@ import javax.servlet.http.HttpServletResponse;
 @WebServlet(name = "BackgroundStatsGatherer", urlPatterns = {"/BackgroundStatsGatherer"}, loadOnStartup = 10)
 public class BackgroundStatsGatherer extends HttpServlet {
 
-    public static final String WEBAPP_VERSION = "1.1.3.0";
+    public static final String WEBAPP_VERSION = "1.2.0.5";
     public static final String HISTORY_PATH_PARAM = "RedditHistoryPath";
     public static final String METRICS_CACHE_PARAM = "metrics";
     public static final String DEFAULT_SUB_NAME = "arduino";
@@ -184,6 +184,7 @@ public class BackgroundStatsGatherer extends HttpServlet {
     public void init() throws ServletException {
             super.init(); //To change body of generated methods, choose Tools | Templates.
         System.out.println("********* Starting background stats gathering servlet.");
+        System.out.println("Version: " + WEBAPP_VERSION);
 
         HashMap<String, MetricHelper> metricCache = (HashMap) getServletContext().getAttribute(METRICS_CACHE_PARAM);
         if (metricCache == null) {
