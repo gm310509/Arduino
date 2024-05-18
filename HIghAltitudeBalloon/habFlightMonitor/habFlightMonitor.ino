@@ -219,13 +219,13 @@ void updateDisplay(int hour, int minute, int second, bool timeValid,
   // Location
   if (locValid) {
     double tmp = abs(lon);
-    display.print(rightJustifyF(buf, 8, tmp, 4));
+    display.print(rightJustifyF(buf, 9, tmp, 5));
     display.print(lon < 0 ? "W" : "E");
 
     display.print(F(" "));
 
     tmp = abs(lat);
-    display.print(rightJustifyF(buf, 7, tmp, 4));
+    display.print(rightJustifyF(buf, 8, tmp, 5));
     display.println(lat < 0 ? "S": "N");
   } else {
     display.println(F("Lon / lat"));
