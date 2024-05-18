@@ -2,6 +2,14 @@
  * Configuration parameters for the hab logger program
  */
 
+ /* Revision History
+  *
+  * 2024-05-18 Added Timezone offset and other configuration constants. 
+  *
+  * 2024-05-17 Initial checkin
+  *
+  */
+
 /** IMPORTANT *** IMPORTANT *** IMPORTANT * IMPORTANT **
  ** The following #define should be commented out for an actual flight!
  ** IMPORTANT *** IMPORTANT *** IMPORTANT * IMPORTANT **/
@@ -13,6 +21,12 @@
 
 // The current altitude record.
 #define CURR_ALTITUDE_RECORD 40000L
+
+// 0 = UTC
+// 8 = China, Singapore, Western Australia
+// 10 - Eastern Australia (standard Time)
+// 11 - Eastern Australia - daylight time (Not QLD)
+#define TZ_OFFSET 0
 
 // Temperature Sensors
 #define INTERNAL_TEMP 0
@@ -27,6 +41,13 @@
 
 // The port that the OLED is connected to.
 #define OLED_PORT Wire
+
+#define OLED_MODEL SSD1306_SWITCHCAPVCC
+#define OLED_SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
+#define OLED_SCREEN_WIDTH 128 // OLED display width, in pixels
+#define OLED_SCREEN_HEIGHT 64 // OLED display height, in pixels
+
+
 
 // DIO Pin Heater control is connected to.
 #define HEATER_CONTROL_PIN  36
@@ -60,3 +81,8 @@
  * be set to 1/3.
  */
 #define DIVIDER_RATIO_GND 0.5
+
+
+// Baud rate of the Serial (PC USB connection) device.
+#define CONSOLE_BAUD 115200
+
