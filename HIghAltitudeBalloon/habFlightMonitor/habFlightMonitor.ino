@@ -225,8 +225,8 @@ void updateDisplay(int hour, int minute, int second, bool timeValid,
     display.print(F(" "));
 
     tmp = abs(lat);
-    display.println(rightJustifyF(buf, 7, tmp, 4));
-    display.print(lat < 0 ? "S": "N");
+    display.print(rightJustifyF(buf, 7, tmp, 4));
+    display.println(lat < 0 ? "S": "N");
   } else {
     display.println(F("Lon / lat"));
   }
