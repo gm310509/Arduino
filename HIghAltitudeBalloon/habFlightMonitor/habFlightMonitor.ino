@@ -13,12 +13,9 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
-#define VERSION "v1.00.00"
+#define VERSION "v1.00.01"
 // Baud rate of Serial console.
-#define CONSOLE_BAUD 115200
 
-#define SCREEN_WIDTH 128 // OLED display width, in pixels
-#define SCREEN_HEIGHT 64 // OLED display height, in pixels
 #define OLED_LINE_SPACING 4 // Additional space between lines when positioning cursor.
 
 // Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
@@ -27,9 +24,8 @@
 // On an arduino MEGA 2560: 20(SDA), 21(SCL)
 // On an arduino LEONARDO:   2(SDA),  3(SCL), ...
 #define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
-#define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
 
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, & OLED_PORT, OLED_RESET);
+Adafruit_SSD1306 display(OLED_SCREEN_WIDTH, OLED_SCREEN_HEIGHT, & OLED_PORT, OLED_RESET);
 
 
 /**
@@ -96,7 +92,7 @@ char * rightJustifyF(char *buf, int fieldSize, double x, int dpCnt, char filler 
 
   long iPart = (long) x;
 
-  float fPart = x - (float) iPart;
+  double fPart = x - (double) iPart;
 
   rightJustify(buf, fieldSize - 1 - dpCnt, iPart, filler, seperator);
   char *p = buf + fieldSize - 1 - dpCnt;
@@ -110,7 +106,7 @@ char * rightJustifyF(char *buf, int fieldSize, double x, int dpCnt, char filler 
   }
 
   while (p < buf + fieldSize && dpCnt--) {
-    float tmp = fPart * 10.0;
+    double tmp = fPart * 10.0;
     int digit = (int)tmp;
     *p++ = digit + '0';
     fPart = tmp - digit;
@@ -141,23 +137,23 @@ void dumpStr(const char * lbl, const char *buf, int bufSize) {
 
 
 void logData (int hour, int minute, int second, bool timeValid,
-              float lat, float lon, bool locValid,
-              float alt, bool altValid, bool recordBroken,
-              float hdop, bool hdopValid,
+              double lat, double lon, bool locValid,
+              double alt, bool altValid, bool recordBroken,
+              double hdop, bool hdopValid,
               int satCnt, bool satCntValid,
-              float tempC1, float tempC2,
-              float battV) {
+              double tempC1, double tempC2,
+              double battV) {
   // Serial.println(F("Log data called"));
 }
 
 
 void updateDisplay(int hour, int minute, int second, bool timeValid,
-              float lat, float lon, bool locValid,
-              float alt, bool altValid, bool recordBroken,
-              float hdop, bool hdopValid,
+              double lat, double lon, bool locValid,
+              double alt, bool altValid, bool recordBroken,
+              double hdop, bool hdopValid,
               int satCnt, bool satCntValid,
-              float tempC1, float tempC2,
-              float battV) {
+              double tempC1, double tempC2,
+              double battV) {
   char buf[20];  // Buffer for padding up to 9 characters including string terminator.
 
   display.clearDisplay();
@@ -222,9 +218,15 @@ void updateDisplay(int hour, int minute, int second, bool timeValid,
 
   // Location
   if (locValid) {
-    display.print(rightJustifyF(buf, 8, lon, 4));
+    double tmp = abs(lon);
+    display.print(rightJustifyF(buf, 8, tmp, 4));
+    display.print(lon < 0 ? "W" : "E");
+
     display.print(F(" "));
-    display.println(rightJustifyF(buf, 5, lat, 4));
+
+    tmp = abs(lat);
+    display.println(rightJustifyF(buf, 7, tmp, 4));
+    display.print(lat < 0 ? "S": "N");
   } else {
     display.println(F("Lon / lat"));
   }
@@ -296,7 +298,7 @@ void updateDisplay(int hour, int minute, int second, bool timeValid,
 void setup() {
 
   // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
-  if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+  if(!display.begin(OLED_MODEL, OLED_SCREEN_ADDRESS)) {
     Serial.begin(CONSOLE_BAUD);
     Serial.println(F("SSD1306 allocation failed"));
     int interval = 200;
@@ -340,7 +342,7 @@ void setup() {
   Serial.println("HAB logger.");
   Serial.println("Init Hab");
   Serial.println(VERSION);
-  display.println(F("init hab:"));
+  display.print(F("init hab: "));
   display.display();
   initHab(display);
   display.println(F("Init complete."));
@@ -351,31 +353,53 @@ void setup() {
 
 void loop() {
 static int hour = 0, minute = 0, second = 0, satCnt = 0;
-static float lat = 0.0, lon = 0.0, alt = 0.0, tempInternal = 0.0, tempExternal = 0.0, batteryVoltage = 0.0, hdop = 0.0;
-static float prevTemp = 9999.99;
+static double lat = 0.0, lon = 0.0, alt = 0.0, tempInternal = 0.0, tempExternal = 0.0, batteryVoltage = 0.0, hdop = 0.0;
+static double prevTemp = 9999.99;
 static bool recordBroken = false;
-static bool locValid, altValid, satCntValid, timeValid, hdopValid;
+static bool locValid = false, altValid = false, satCntValid = false, timeValid = false, hdopValid = false;
 bool newData = false;
 
-
+//***************************
+// TODO: Use isValid() to determine whether to read new values or not.
+//       Use a latch for has valid data every been received instead of the isValid() value.
+//       Maybe make the latch expire if no valid data for some time? (probably not).
   if (checkGPSData()) {
     newData = true;
     digitalWrite(LED_BUILTIN, ! digitalRead(LED_BUILTIN));
-    hour = getHour();
-    minute = getMinutes();
-    second = getSecond();
-    lat = getLat();
-    lon = getLon();
-    locValid = isLocValid();
-    alt = getAlt();
-    if (alt > CURR_ALTITUDE_RECORD) {
-      recordBroken = true;
+    if (isTimeValid()) {
+      timeValid = true;
+      hour = getHour();
+      hour += TZ_OFFSET;
+      if (hour >= 24) {
+        hour -= 24;
+      } else if (hour < 0) {
+        hour += 24;
+      }
+      minute = getMinutes();
+      second = getSecond();
     }
-    altValid = isAltValid();
-    hdop = getHdop();
-    hdopValid = isHdopValid();
-    satCnt = getSatCnt();
-    satCntValid = isSatCntValid();
+    if (isLocValid()) {
+      locValid = true;
+      lat = getLat();
+      lon = getLon();
+    }
+    
+    if (isAltValid()) {
+      altValid = true;
+      alt = getAlt();
+      if (alt > CURR_ALTITUDE_RECORD) {
+        recordBroken = true;
+      }
+
+    }
+    if (isHdopValid()) {
+      hdopValid = true;
+      hdop = getHdop();
+    }
+    if (isSatCntValid()) {
+      satCntValid = true;
+      satCnt = getSatCnt();
+    }
   }
   if (checkTemperatureData()) {
     newData = true;

@@ -28,7 +28,7 @@ DallasTemperature sensors(&oneWire);
 int temperatureSensorCnt = 0;
 #define MAX_SENSOR_CNT 2
 DeviceAddress tempSensorAddr[MAX_SENSOR_CNT];
-float temperature[MAX_SENSOR_CNT];
+double temperature[MAX_SENSOR_CNT];
 
 // Include our library.
 
@@ -110,7 +110,7 @@ unsigned long updateInterval = 1000;
 
 
 
-extern float getLat(void) {
+double getLat(void) {
 #ifdef TEST_MODE
   return random(0,90L*60L*60L) / 3600.0;
 #else
@@ -118,7 +118,7 @@ extern float getLat(void) {
 #endif
 }
 
-extern float getLon(void) {
+double getLon(void) {
 #ifdef TEST_MODE
   return random(0,180L*60L*60L) / 3600.0;
 #else
@@ -136,7 +136,7 @@ boolean isLocValid(void) {
 
 
 
-extern float getAlt(void) {
+double getAlt(void) {
 #ifdef TEST_MODE
   return random(0, 60000000L) / 1000.0;
 #else
@@ -153,7 +153,7 @@ boolean isAltValid(void) {
 }
 
 
-float getHdop(void) {
+double getHdop(void) {
 #ifdef TEST_MODE
   return random(0, 5000L) / 1000.0;
 #else
@@ -230,7 +230,7 @@ boolean isTimeValid(void) {
 
 
 
-float getTemperature(int sensorId) {
+double getTemperature(int sensorId) {
 #ifdef TEST_MODE
   return random(0,160)/2.0 - 40;
 #else
@@ -260,7 +260,7 @@ boolean isHeaterOn() {
 
 
 
-boolean checkHeater(float currentTemp, float prevTemp) {
+boolean checkHeater(double currentTemp, double prevTemp) {
   boolean tempChangedInd = false;
   // Has the temperature changed?
   if ( (abs(currentTemp - prevTemp) >= TEMP_DIFF_THRESH)) {
@@ -280,14 +280,14 @@ boolean checkHeater(float currentTemp, float prevTemp) {
 }
 
 
-float getBatteryVoltage() {
+double getBatteryVoltage() {
 #ifdef TEST_MODE
   return random(300,650)/100.0;
 #else
   unsigned int aValue = analogRead(VOLTAGE_MEASURE);
   // Serial.print(F("Analog Read Value: ")); Serial.println(aValue);
     // voltage = aValue / aRange * expected divider voltage (3V) * divider scale (0.5) ^ -1
-  return aValue / 1023.0 * ((float)VREF) / ((float)DIVIDER_RATIO_GND);
+  return aValue / 1023.0 * ((double)VREF) / ((double)DIVIDER_RATIO_GND);
 #endif
 }
 
@@ -348,7 +348,9 @@ void initTemperatureSensors(Adafruit_SSD1306 & display) {
 
 
 void initHab(Adafruit_SSD1306 & display) {
-  // Nothing to do yet.
+  display.print(F("TZ: "));
+  display.println(TZ_OFFSET);
+
 #ifdef TEST_MODE
   randomSeed(analogRead(A0));
 #else

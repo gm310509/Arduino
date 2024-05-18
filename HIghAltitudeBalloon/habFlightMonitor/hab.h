@@ -19,14 +19,14 @@ extern void initHab(Adafruit_SSD1306 & display);
 extern int checkGPSData();
 extern int checkTemperatureData();
 
-extern float getLat(void);
-extern float getLon(void);
+extern double getLat(void);
+extern double getLon(void);
 extern boolean isLocValid(void);
 
-extern float getAlt(void);
+extern double getAlt(void);
 extern boolean isAltValid(void);
 
-extern float getHdop(void);
+extern double getHdop(void);
 extern boolean isHdopValid(void);
 
 extern int getSatCnt(void);
@@ -38,14 +38,14 @@ extern int getSecond(void);
 extern boolean isTimeValid(void);
 
 
-extern float getTemperature(int);
+extern double getTemperature(int);
 
 
-extern boolean checkHeater(float, float);
+extern boolean checkHeater(double, double);
 extern boolean heaterOn(boolean);
 extern boolean isHeaterOn();
 
-extern float getBatteryVoltage(void);
+extern double getBatteryVoltage(void);
 
 #ifdef __cplusplus
 }
