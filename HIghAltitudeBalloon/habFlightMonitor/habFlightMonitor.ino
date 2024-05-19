@@ -2,6 +2,12 @@
  * Program to monitor and log a High Altitude Balloon
  * flight.
  *
+ *  V1.00.02.00 19-05-2024
+ *    * Added altitude record indicator.
+ *
+ *  V1.00.00.00 16-05-2024 (?)
+ *    * Initial version.
+ *  
  */
 // HAB stuff
 #include "hab.h"
@@ -13,7 +19,7 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
-#define VERSION "v1.00.01"
+#define VERSION "v1.00.02.00"
 // Baud rate of Serial console.
 
 #define OLED_LINE_SPACING 4 // Additional space between lines when positioning cursor.
@@ -221,7 +227,6 @@ void updateDisplay(int hour, int minute, int second, bool timeValid,
     double tmp = abs(lon);
     display.print(rightJustifyF(buf, 9, tmp, 5));
     display.print(lon < 0 ? "W" : "E");
-
     display.print(F(" "));
 
     tmp = abs(lat);
@@ -359,10 +364,8 @@ static bool recordBroken = false;
 static bool locValid = false, altValid = false, satCntValid = false, timeValid = false, hdopValid = false;
 bool newData = false;
 
-//***************************
-// TODO: Use isValid() to determine whether to read new values or not.
-//       Use a latch for has valid data every been received instead of the isValid() value.
-//       Maybe make the latch expire if no valid data for some time? (probably not).
+  checkAltitudeRecord(alt);       // Check the altitude and if appropriate, set or blink the record LED.
+
   if (checkGPSData()) {
     newData = true;
     digitalWrite(LED_BUILTIN, ! digitalRead(LED_BUILTIN));
@@ -387,11 +390,11 @@ bool newData = false;
     if (isAltValid()) {
       altValid = true;
       alt = getAlt();
-      if (alt > CURR_ALTITUDE_RECORD) {
+      if (alt > ALTITUDE_RECORD_LOW) {
         recordBroken = true;
       }
-
     }
+
     if (isHdopValid()) {
       hdopValid = true;
       hdop = getHdop();

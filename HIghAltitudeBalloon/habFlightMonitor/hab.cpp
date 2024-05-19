@@ -46,10 +46,6 @@ SoftwareSerial GPS_PORT(RX, TX);
 
 
 
-#define GPS_BAUD 9600
-
-
-
 int checkGPSData() {
 
 #if defined(TEST_MODE)
@@ -59,10 +55,10 @@ int checkGPSData() {
     gps.encode(ch);
   }
   // TODO Remove this in favour of using the actual GPS data to determine "new data" status.
-  static unsigned long lastUpdateTime;  
-  unsigned long updateInterval = 5000;       // TODO remove this
+  static uint32_t lastUpdateTime;  
+  uint32_t updateInterval = 5000;       // TODO remove this
 
-  unsigned long _now = millis();
+  uint32_t _now = millis();
   if (_now - lastUpdateTime > updateInterval) {
     lastUpdateTime = _now;
     // TODO: Get GPS Data.
@@ -90,10 +86,10 @@ int checkGPSData() {
 
 
 int checkTemperatureData() {
-static unsigned long lastUpdateTime;
+static uint32_t lastUpdateTime;
 unsigned long updateInterval = 1000;
 
-  unsigned long _now = millis();
+  uint32_t _now = millis();
   if (_now - lastUpdateTime > updateInterval) {
     lastUpdateTime = _now;
     // Serial.println(F("Checking temperature"));
@@ -150,6 +146,48 @@ boolean isAltValid(void) {
 #else
   return gps.altitude.isValid();
 #endif
+}
+
+
+
+void altitudeRecordLedOn(boolean ledOn) {
+  digitalWrite(RECORD_LED_PIN, ledOn ? HIGH : LOW);
+}
+
+AltitudeRecordState _altitudeRecordState = NoRecord;
+
+enum AltitudeRecordState getAltitudeRecordState() {
+  return _altitudeRecordState;
+}
+
+void checkAltitudeRecord(double alt) {
+static uint32_t lastLedUpdateTime;
+static double prevAlt = 0.0;
+const uint32_t ledBlinkInterval = 250;
+
+  // Consider LED blink if high record.  
+  if (_altitudeRecordState == HighRecord) {
+    uint32_t _now = millis();
+    if (_now - lastLedUpdateTime >= ledBlinkInterval) {
+      lastLedUpdateTime = _now;
+      digitalWrite(RECORD_LED_PIN, ! digitalRead (RECORD_LED_PIN));
+    }
+  }
+
+  // if altitude has not changed, return.
+  if (alt != prevAlt) {
+    prevAlt = alt;
+    if (alt >= ALTITUDE_RECORD_HIGH) {
+      _altitudeRecordState = HighRecord;
+      lastLedUpdateTime = millis();
+      // Serial.print("***** High Record State: "); Serial.println(_altitudeRecordState);
+    } else if (alt >= ALTITUDE_RECORD_LOW && _altitudeRecordState == NoRecord) {
+      _altitudeRecordState = LowRecord;
+      altitudeRecordLedOn(true);
+      // Serial.print("***** Low Record State: "); Serial.println(_altitudeRecordState);
+    } 
+  }
+
 }
 
 
@@ -352,13 +390,16 @@ void initHab(Adafruit_SSD1306 & display) {
   display.println(TZ_OFFSET);
 
 #ifdef TEST_MODE
-  randomSeed(analogRead(A0));
+  randomSeed(analogRead(A7));
 #else
   initTemperatureSensors(display);
 #endif
   pinMode(HEATER_CONTROL_PIN, OUTPUT);
+  pinMode(RECORD_LED_PIN, OUTPUT);
+  altitudeRecordLedOn(true);
   heaterOn(true);
   delay(100);
+  altitudeRecordLedOn(false);
   heaterOn(false);
   GPS_PORT.begin(GPS_BAUD);
 }

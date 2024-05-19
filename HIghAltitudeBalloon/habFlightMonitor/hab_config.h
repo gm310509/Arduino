@@ -16,11 +16,15 @@
 
 // Uncomment to enable test mode - primarily generates random numbers
 // in place of the sensor data.
+
 // #define TEST_MODE
 
 
 // The current altitude record.
-#define CURR_ALTITUDE_RECORD 40000L
+#define ALTITUDE_RECORD_LOW 35043L
+#define ALTITUDE_RECORD_HIGH 40000L
+
+#define RECORD_LED_PIN  35
 
 // 0 = UTC
 // 8 = China, Singapore, Western Australia
@@ -38,6 +42,8 @@
 
 // The port the GPS is connected to.
 #define GPS_PORT  Serial1
+// Baud rate of the GPS.
+#define GPS_BAUD 9600
 
 // The port that the OLED is connected to.
 #define OLED_PORT Wire
@@ -58,15 +64,12 @@
 // Amount temperature must change before it is officially a change in value.
 #define TEMP_DIFF_THRESH 0.1
 
-#if defined(TEST_MODE)
-#define HEATER_ON_TEMP   27.0
-#define HEATER_OFF_TEMP  27.5
-#else
+// #define HEATER_ON_TEMP   27.0
+// #define HEATER_OFF_TEMP  27.5
 // Heater is turned on at this temperature or lower. Celsius.
 #define HEATER_ON_TEMP   0.0
 // Heater is turned off at this temperature or higher. Celsius.
 #define HEATER_OFF_TEMP  0.5
-#endif
 
 // Pin from which voltages are measured.
 #define VOLTAGE_MEASURE     A0

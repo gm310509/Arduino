@@ -15,6 +15,12 @@
 extern "C"{
 #endif
 
+enum AltitudeRecordState {
+  NoRecord, LowRecord, HighRecord
+};
+
+enum AltitudeRecordState getAaltitudeRecordState();
+
 extern void initHab(Adafruit_SSD1306 & display);
 extern int checkGPSData();
 extern int checkTemperatureData();
@@ -25,6 +31,7 @@ extern boolean isLocValid(void);
 
 extern double getAlt(void);
 extern boolean isAltValid(void);
+extern void checkAltitudeRecord(double);
 
 extern double getHdop(void);
 extern boolean isHdopValid(void);
