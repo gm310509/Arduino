@@ -360,7 +360,7 @@ void initTemperatureSensors(Adafruit_SSD1306 & display) {
   Serial.println(F(" devices."));
   display.print("Found ");
   display.print(temperatureSensorCnt);
-  display.print(F(" ds18B20"));
+  display.println(F(" ds18B20"));
   display.display();
 
   // report parasite power requirements

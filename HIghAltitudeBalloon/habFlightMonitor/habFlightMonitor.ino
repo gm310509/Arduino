@@ -2,6 +2,9 @@
  * Program to monitor and log a High Altitude Balloon
  * flight.
  *
+ *  V1.01.00.00 19-05-2024
+ *    * Added logging to SD card.
+ *
  *  V1.00.02.00 19-05-2024
  *    * Added altitude record indicator.
  *
@@ -11,6 +14,8 @@
  */
 // HAB stuff
 #include "hab.h"
+#include "Utility.h"
+#include "Logger.h"
 
 
 // OLED stuff.
@@ -19,7 +24,9 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
-#define VERSION "v1.00.02.00"
+
+
+#define VERSION "v1.01.00.00"
 // Baud rate of Serial console.
 
 #define OLED_LINE_SPACING 4 // Additional space between lines when positioning cursor.
@@ -34,99 +41,6 @@
 Adafruit_SSD1306 display(OLED_SCREEN_WIDTH, OLED_SCREEN_HEIGHT, & OLED_PORT, OLED_RESET);
 
 
-/**
- * rightJustify
- * 
- * Right justify a long integer into a buffer that is size fieldSize + 1. 
- * The filler character is used to pad the number to the right.
- * 
- * @params
- *   buf - a buffer that is big enough to hold the converted number *and* a trailing null byte.
- *   fieldSize - the number of characters into which the number is formatted.
- *   x - the number to convert.
- *   filler - the character used to pad out the converted number.
- * 
- * @return
- *   a pointer to the buffer.
- * 
- * @note
- * The buffer must be at least fieldSize + 1 characters in size.
- * 
- * If the fieldSize is too small for the converted integer, then the buffer will not contain
- * all of the digits representing the number.
- * 
- */
-char * rightJustify(char *buf, int fieldSize, long x, char filler = ' ', char seperator = '\0') {
-  boolean negativeSign = false;
-
-  // Check for a -ve sign and remember this for later.
-  // ensure we have |x| for conversion.
-  if ((negativeSign = x < 0)) {
-    x = -x;
-  }
-
-  // NULL terminate the string.
-  char *p = buf + fieldSize;
-  *p-- = '\0';
-
-  // Load up the characters representing the number.
-  int digitCount = 0;
-  do {
-    *p-- = x % 10 + '0';
-    x /= 10;
-    digitCount++;
-    if (seperator && digitCount % 3 == 0 && x && p >= buf) {
-      *p-- = seperator;
-    }
-  } while (x && p >= buf);
-
-  // Do we need a negative sign? If so, put it in.
-  if (p >= buf && negativeSign) {
-    *p-- = '-';
-  }
-
-  // Pad out the string.
-  while (p >= buf) {
-    *p-- = filler;
-  }
-  return buf;
-}
-
-
-
-char * rightJustifyF(char *buf, int fieldSize, double x, int dpCnt, char filler = ' ', char seperator = '\0') {
-
-  long iPart = (long) x;
-
-  double fPart = x - (double) iPart;
-
-  rightJustify(buf, fieldSize - 1 - dpCnt, iPart, filler, seperator);
-  char *p = buf + fieldSize - 1 - dpCnt;
-  if (p < buf + fieldSize) {
-    *p++ = '.';
-  }
-
-  // When outputing the fractional component, we need our number to be positive.
-  if (fPart < 0) {
-    fPart = -fPart;
-  }
-
-  while (p < buf + fieldSize && dpCnt--) {
-    double tmp = fPart * 10.0;
-    int digit = (int)tmp;
-    *p++ = digit + '0';
-    fPart = tmp - digit;
-  }
-
-  buf[fieldSize] = '\0';
-  return buf;
-}
-
-
-
-char * rightJustifyF(char *buf, int fieldSize, double x, char filler = ' ', char seperator = '\0') {
-  return rightJustifyF(buf, fieldSize, x, 2, filler, seperator);
-}
 
 
 
@@ -142,6 +56,8 @@ void dumpStr(const char * lbl, const char *buf, int bufSize) {
 
 
 
+
+
 void logData (int hour, int minute, int second, bool timeValid,
               double lat, double lon, bool locValid,
               double alt, bool altValid, bool recordBroken,
@@ -149,7 +65,42 @@ void logData (int hour, int minute, int second, bool timeValid,
               int satCnt, bool satCntValid,
               double tempC1, double tempC2,
               double battV) {
-  // Serial.println(F("Log data called"));
+
+static uint32_t prevLogTime = 0;
+static uint32_t logInterval = LOG_LOW_RATE_MS;
+
+  uint32_t _now = millis();
+  char logRec [200];
+  char wrkBuf[100];      // Workbuffer for any numeric conversions we need to do.
+  
+    // Is it too soon to log the next record?
+  if (_now - prevLogTime < logInterval) {
+    return;       // Yes, so just return.
+  }
+
+  // Setup the parameters for the next logging point.
+  prevLogTime = _now;
+  // Calculate the interval to the next log time.
+  if (alt >= LOG_RATE_HIGH_THRESHOLD_ALT + LOG_THRESHOLD_ALT_TOL) {
+    logInterval = LOG_HIGH_RATE_MS;
+  } else if (alt <= LOG_RATE_HIGH_THRESHOLD_ALT - LOG_THRESHOLD_ALT_TOL) {
+    logInterval = LOG_LOW_RATE_MS;
+  }
+
+  // Log the current data.
+  // The record layout is "$HAB,time,lat,lon,alt,hdop,satCnt,C1,C2,battV"
+  strcpy(logRec, "$HAB,");
+
+  sprintf(wrkBuf, "%d:%02d:%02d,", hour, minute,second);
+  strcat(logRec,wrkBuf);
+
+  sprintf(wrkBuf, "%.6f,%.6f,%.2f,%.4f,%d,", lat, lon, alt, hdop, satCnt);
+  strcat(logRec, wrkBuf);
+
+  sprintf(wrkBuf, "%.2f,%.2f,%.2f", tempC1, tempC2, battV);
+  strcat(logRec, wrkBuf);
+
+  logMessage(logRec);
 }
 
 
@@ -350,7 +301,18 @@ void setup() {
   display.print(F("init hab: "));
   display.display();
   initHab(display);
+  if (generateLogFileName(LOG_FILE_NAME_PREFIX, LOG_FILE_NAME_EXT)) {
+    display.print(F("Log:"));
+    display.println(getLogFileName());
+    Serial.print(F("log filename: "));
+    Serial.println(getLogFileName());
+  } else {
+    display.println(F("NO SD CARD!!"));
+    Serial.println(F("No SD Card"));
+  }
+
   display.println(F("Init complete."));
+  display.display();
   delay(5000);
   display.clearDisplay();
 }

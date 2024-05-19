@@ -40,6 +40,23 @@
 #define HEATER_TEMP_SENSOR INTERNAL_TEMP
 
 
+// Logger parameters.
+// Altitude at which a higher rate of logging is applied.
+#define LOG_RATE_HIGH_THRESHOLD_ALT 10000L
+// A window where the logging rate doesn't change. To trigger a logging rate change:
+// During ascent, the altitude must be or exceed the threshold + this tollerance.
+// During descent, the altitude must be or lower than the threshold - this tollerance.
+#define LOG_THRESHOLD_ALT_TOL 100
+// Logging rates.
+#define LOG_LOW_RATE_MS     5*1000L
+#define LOG_HIGH_RATE_MS    1*1000L
+
+
+// A prefix and extension for the log file name.
+#define LOG_FILE_NAME_PREFIX  "hab"
+#define LOG_FILE_NAME_EXT     "log"
+
+
 // The port the GPS is connected to.
 #define GPS_PORT  Serial1
 // Baud rate of the GPS.
