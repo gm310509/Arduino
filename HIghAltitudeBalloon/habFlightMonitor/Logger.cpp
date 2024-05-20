@@ -85,13 +85,13 @@ bool isLoggingEnabled() {
 
 
 bool logMessage(const char * msg) {
-  Serial.print("Request to log: "); Serial.println(msg);
+  // Serial.print("Request to log: "); Serial.println(msg);
   if (!isLoggingEnabled()) {
     return false;
   }
 
   if (file.open(logFileName, O_RDWR | O_CREAT | O_AT_END)) {
-    Serial.println("File opened, writing message");
+    // Serial.println("File opened, writing message");
     file.println(msg);
     // file.flush();
     file.close();
@@ -99,4 +99,23 @@ bool logMessage(const char * msg) {
   }
   return false;
 }
+
+
+// bool logMessage(const __FlashStringHelper * msg) {
+//   const int MaxMessageSize = 200;
+//   char buf[MaxMessageSize];
+
+//   char *dest = buf;
+//   PGM_P p = reinterpret_cast<PGM_P>(msg);
+//   unsigned char ch;
+//   do {
+//     ch = pgm_read_byte(p++);
+//     *dest++ = ch;
+//   } while (ch && (dest - buf) < MaxMessageSize);
+//   if (dest - buf >= MaxMessageSize) {
+//     buf[MaxMessageSize - 1] = '\0';
+//   }
+
+//   logMessage(buf);
+// }
 

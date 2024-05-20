@@ -1,6 +1,8 @@
 #ifndef _LOGGER_H
 #define _LOGGER_H
 
+#include <Arduino.h>
+
 #include "hab_config.h"
 #include <SdFat.h>
 #include <sdios.h>
@@ -17,5 +19,6 @@ extern const char * getLogFileName();
 extern bool isLoggingEnabled();
 
 extern bool logMessage(const char *);
+// extern bool logMessage(const __FlashStringHelper *);
 
 #endif
