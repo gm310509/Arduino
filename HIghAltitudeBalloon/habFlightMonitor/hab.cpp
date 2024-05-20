@@ -33,6 +33,7 @@ double temperature[MAX_SENSOR_CNT];
 // Include our library.
 
 #include "hab.h"
+#include "Logger.h"
 
 #ifdef ARDUINO_AVR_UNO
 #include <SoftwareSerial.h>
@@ -45,13 +46,33 @@ SoftwareSerial GPS_PORT(RX, TX);
 #endif
 
 
+char gpsSentence[200];
+unsigned int gpsSentenceIdx = 0;
+
+// Sentences to record.
+// Talker ID:
+// * GN - Any compination of GNSS (GP, GL, GA, GB)
+// * GP - The GPS, SBAS, QZSS systems.
+// Sentences:
+// $xxRMC - Recommended Min data: time, lat, lon, speed over ground, course over ground, date, magnetic variation, pos mode, nav status.
+// $xxGGA - System fix data: time, lat, lon, quality ind, num sat, hdop,alt,sep, differential
+
+const char *sentenceFilters[] = {
+  // Sentences processed by TinyGPS++
+  "$GPRMC",       // $GPRMC - GPS system: Recommended Minimum Data.
+  "$GPGGA",       // $GPGPA - GPS system: System Fix Data.
+  "$GNRMC",       // $GNGLL - General (all systems): Recommended Minimum Data.
+  "$GNGGA"        // $GNRMC - General (all systems): : System Fix Data.
+  // Additional sentences (None)
+};
+
 
 int checkGPSData() {
 
 #if defined(TEST_MODE)
   while (GPS_PORT.available()) {
     char ch = GPS_PORT.read();
-     Serial.print(ch);
+    Serial.print(ch);
     gps.encode(ch);
   }
   // TODO Remove this in favour of using the actual GPS data to determine "new data" status.
@@ -68,6 +89,22 @@ int checkGPSData() {
 #else
   while (GPS_PORT.available()) {
     char ch = GPS_PORT.read();
+    if (ch == '\n' || ch == '\r') {
+      if (gpsSentenceIdx != 0) {
+        for (unsigned int i = 0; i < ARRAY_SIZE(sentenceFilters); i++) {
+          int result = strncmp(sentenceFilters[i], gpsSentence, strlen(sentenceFilters[i]));
+          if (result == 0) {
+            logMessage(gpsSentence);
+            break;
+          }
+        }
+        gpsSentenceIdx = 0;
+        gpsSentence[gpsSentenceIdx] = '\0';
+      }
+    } else if (gpsSentenceIdx < sizeof(gpsSentence)) {
+      gpsSentence[gpsSentenceIdx++] = ch;
+      gpsSentence[gpsSentenceIdx] = '\0';
+    }
     Serial.print(ch);
     gps.encode(ch);
   }
