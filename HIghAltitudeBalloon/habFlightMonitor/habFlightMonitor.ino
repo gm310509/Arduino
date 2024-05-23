@@ -2,6 +2,9 @@
  * Program to monitor and log a High Altitude Balloon
  * flight.
  *
+ *  V1.02.01.00 20-05-2024
+ *    * Removed "slowest log time" metric from log.
+ *
  *  V1.02.00.00 20-05-2024
  *    * Added logging of the NMEA GPS sentences processed by TinyGPS++.
  *    * Added column headers for all of the record types to the log file.
@@ -30,7 +33,7 @@
 
 
 
-#define VERSION "v1.02.00.00"
+#define VERSION "v1.02.01.00"
 // Baud rate of Serial console.
 
 #define OLED_LINE_SPACING 4 // Additional space between lines when positioning cursor.
@@ -66,7 +69,7 @@ void logHeader() {
   // logMessage(F("$GPGGA,time,lat,ns,lon,ew,quality,numSV,hdop,alt,altU,sep,sepU,diffAge,diffStation,chksum"));
   // logMessage(F("$GNRMC,time,status,lat,ns,lon,ew,spdKnot,cog,date,mv,mvEW,posMode,navStatus,chksum"));
   // logMessage(F("$GNGGA,time,lat,ns,lon,ew,quality,numSV,hdop,alt,altU,sep,sepU,diffAge,diffStation,chksum"));
-  logMessage("$HAB,UTCTime,lat,lon,alt,hdop,satCnt,T1,T2,battV,sumLogTimeMs,logCnt,worstLogTimeMs");
+  logMessage("$HAB,UTCTime,lat,lon,alt,hdop,satCnt,T1,T2,battV,sumLogTimeMs,logCnt");
   logMessage("$GPRMC,time,status,lat,ns,lon,ew,spdKnot,cog,date,mv,mvEW,posMode,navStatus,chksum");
   logMessage("$GPGGA,time,lat,ns,lon,ew,quality,numSV,hdop,alt,altU,sep,sepU,diffAge,diffStation,chksum");
   logMessage("$GNRMC,time,status,lat,ns,lon,ew,spdKnot,cog,date,mv,mvEW,posMode,navStatus,chksum");
@@ -86,7 +89,7 @@ static uint32_t prevLogTime = 0;
 static uint32_t logInterval = LOG_LOW_RATE_MS;
 static unsigned int logCnt = 0;
 static uint32_t logCumulativeTimeMs = 0;
-static uint32_t slowestLogTime = 0;
+
 
   uint32_t _now = millis();
   char logRec [200];
@@ -119,19 +122,19 @@ static uint32_t slowestLogTime = 0;
   sprintf(wrkBuf, "%.2f,%.2f,%.2f,", tempC1, tempC2, battV);
   strcat(logRec, wrkBuf);
 
-  sprintf(wrkBuf, "%lu,%u,%lu", logCumulativeTimeMs, logCnt, slowestLogTime);
+  sprintf(wrkBuf, "%lu,%u", logCumulativeTimeMs, logCnt);
   strcat(logRec, wrkBuf);
 
-  logMessage(logRec);
+  if (!logMessage(logRec)) {
+    Serial.print(F("*** Failed to log: ")); Serial.println(logRec);
+  }
 
   uint32_t endTime = millis();
 
   uint32_t logTime = endTime - _now;
-  if (logTime > slowestLogTime) {
-    slowestLogTime = logTime;
-  }
   logCumulativeTimeMs += logTime;
   logCnt++;
+  Serial.print(F("Log msg: ")); Serial.print(logCnt); Serial.print(F(" ms=")); Serial.println(logTime);
 }
 
 

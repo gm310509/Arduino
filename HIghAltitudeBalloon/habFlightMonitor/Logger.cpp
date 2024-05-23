@@ -64,7 +64,7 @@ bool generateLogFileName(const char *, const char *) {
       strcat(logFileName, rightJustify(wrkBuf, 4, fileCnt, '0'));
       strcat(logFileName, ".");
       strcat(logFileName, LOG_FILE_NAME_EXT);
-      if (file.open(logFileName, O_WRONLY | O_CREAT)) {
+      if (file.open(logFileName, O_RDWR | O_CREAT | O_AT_END)) {
         file.close();
         loggingEnabled = true;
       }
@@ -86,6 +86,7 @@ bool isLoggingEnabled() {
 
 bool logMessage(const char * msg) {
   // Serial.print("Request to log: "); Serial.println(msg);
+
   if (!isLoggingEnabled()) {
     return false;
   }
@@ -98,6 +99,10 @@ bool logMessage(const char * msg) {
     return true;
   }
   return false;
+  
+  // boolean result = file.println(msg);
+  // file.flush();
+  // return result;
 }
 
 
