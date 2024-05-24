@@ -2,6 +2,10 @@
  * Program to monitor and log a High Altitude Balloon
  * flight.
  *
+ *  v1.03.00.00 24-05-2024
+ *    * Removed several small font items (lat, lon etc) from OLED display.
+ *    * adjusted temperature display to use larger font.
+ *
  *  V1.02.01.00 20-05-2024
  *    * Removed "slowest log time" metric from log.
  *
@@ -19,6 +23,10 @@
  *    * Initial version.
  *  
  */
+
+#define VERSION "v1.03.00.00"
+
+
 // HAB stuff
 #include "hab.h"
 #include "Utility.h"
@@ -33,7 +41,6 @@
 
 
 
-#define VERSION "v1.02.01.00"
 // Baud rate of Serial console.
 
 #define OLED_LINE_SPACING 4 // Additional space between lines when positioning cursor.
@@ -285,6 +292,106 @@ void updateDisplay(int hour, int minute, int second, bool timeValid,
 }
 
 
+void updateDisplayV2(int hour, int minute, int second, bool timeValid,
+              double lat, double lon, bool locValid,
+              double alt, bool altValid, bool recordBroken,
+              double hdop, bool hdopValid,
+              int satCnt, bool satCntValid,
+              double tempC1, double tempC2,
+              double battV) {
+  char buf[20];  // Buffer for padding up to 9 characters including string terminator.
+
+  display.clearDisplay();
+  display.setTextColor(WHITE);
+  display.setCursor(0,0);
+  int16_t x, y, dx, dy;
+  uint16_t w, h;
+  // Location
+
+
+  // Time
+ #ifdef TEST_MODE
+  Serial.print("time: ");
+    Serial.print(rightJustify(buf, 2, hour));
+    Serial.print(":");
+    Serial.print(rightJustify(buf, 2, minute, '0'));
+    Serial.print(":");
+    Serial.print(rightJustify(buf, 2, second, '0'));
+    Serial.print(F(" valid: ")); Serial.println(timeValid ? "T": "F");
+ #endif
+
+  display.setTextSize(2);
+  if (timeValid) {
+    display.print(rightJustify(buf, 4, hour));
+    display.print(":");
+    display.print(rightJustify(buf, 2, minute, '0'));
+    display.print(":");
+    display.println(rightJustify(buf, 2, second, '0'));
+  } else {
+    display.println("  --:--:--");
+  }
+
+  // Altitude
+
+#if defined(TEST_MODE)
+  Serial.print("altf: "); Serial.print(buf);
+  Serial.print(F(" valid: ")); Serial.println(altValid ? "T": "F");
+#endif
+
+  display.setTextSize(2); // larger font for key metric.
+  if (altValid) {
+    display.print(rightJustifyF(buf, 10, alt, 2, ' ', ','));
+    x = display.getCursorX();
+    y = display.getCursorY();
+    display.getTextBounds((const char *) buf, x, y, &dx, &dy, &w, &h);
+    display.setTextSize(1);
+    x = display.getCursorX();
+    display.println("m");
+    dy = display.getCursorY();
+    display.setCursor(x, dy);
+    if (recordBroken) {
+      display.print("R");
+    }
+    // Leave a small amount of space below the large font messages.
+    // display.setCursor(0, y + h + OLED_LINE_SPACING);
+    display.setCursor(0, y + h);
+  } else {
+    display.println("Alt: --");
+    // display.setCursor(0, display.getCursorY() + OLED_LINE_SPACING);
+    display.setCursor(0, display.getCursorY());
+    display.setTextSize(1);
+  }
+
+
+  // Temperature
+#if defined(TEST_MODE)
+  for (unsigned int i = 0; i < sizeof(buf); i++) {
+    buf[i] = '*';
+  }
+
+  Serial.print("temps: ");
+    Serial.print(tempC1, 2);
+    Serial.print(", ");
+    Serial.print(tempC2, 2);
+    Serial.print(F(", heat: "));
+    Serial.print(F(isHeaterOn() ? "on" : "off"));
+    Serial.println();
+#endif
+
+  display.setTextSize(2);
+  display.print(rightJustifyF(buf, 5, tempC1, 1));
+  display.print(" C");
+  display.println(isHeaterOn() ? " H" : "");
+  display.print(rightJustifyF(buf, 5, tempC2, 1));
+  display.print(" C");
+  if (recordBroken) {
+      display.print(" R");
+  }
+  display.display();
+}
+
+
+
 void setup() {
 
   // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
@@ -421,7 +528,7 @@ bool newData = false;
 
 
   if (newData) {
-    updateDisplay(localHour, minute, second, timeValid, lat, lon, locValid, alt, altValid, recordBroken, hdop, hdopValid, satCnt, satCntValid, tempInternal, tempExternal, batteryVoltage);
+    updateDisplayV2(localHour, minute, second, timeValid, lat, lon, locValid, alt, altValid, recordBroken, hdop, hdopValid, satCnt, satCntValid, tempInternal, tempExternal, batteryVoltage);
     logData(utcHour, minute, second, timeValid, lat, lon, locValid, alt, altValid, recordBroken, hdop, hdopValid, satCnt, satCntValid, tempInternal, tempExternal, batteryVoltage);
   }
 }
