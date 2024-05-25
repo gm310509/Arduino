@@ -2,6 +2,9 @@
  * Program to monitor and log a High Altitude Balloon
  * flight.
  *
+ *  v1.03.01.00 25-05-2024
+ *    * Added $GNTXT and $GPTXT to list of messages to log.
+ *
  *  v1.03.00.00 24-05-2024
  *    * Removed several small font items (lat, lon etc) from OLED display.
  *    * adjusted temperature display to use larger font.
@@ -24,7 +27,7 @@
  *  
  */
 
-#define VERSION "v1.03.00.00"
+#define VERSION "v1.03.01.00"
 
 
 // HAB stuff
@@ -81,6 +84,8 @@ void logHeader() {
   logMessage("$GPGGA,time,lat,ns,lon,ew,quality,numSV,hdop,alt,altU,sep,sepU,diffAge,diffStation,chksum");
   logMessage("$GNRMC,time,status,lat,ns,lon,ew,spdKnot,cog,date,mv,mvEW,posMode,navStatus,chksum");
   logMessage("$GNGGA,time,lat,ns,lon,ew,quality,numSV,hdop,alt,altU,sep,sepU,diffAge,diffStation,chksum");
+  logMessage("$GNTXT,numMsg,msgNum,msgType,text,chksum");
+  logMessage("$GPTXT,numMsg,msgNum,msgType,text,chksum");
 
 }
 

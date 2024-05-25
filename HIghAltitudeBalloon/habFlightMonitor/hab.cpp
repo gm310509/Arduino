@@ -59,11 +59,13 @@ unsigned int gpsSentenceIdx = 0;
 
 const char *sentenceFilters[] = {
   // Sentences processed by TinyGPS++
-  "$GPRMC",       // $GPRMC - GPS system: Recommended Minimum Data.
-  "$GPGGA",       // $GPGPA - GPS system: System Fix Data.
-  "$GNRMC",       // $GNGLL - General (all systems): Recommended Minimum Data.
-  "$GNGGA"        // $GNRMC - General (all systems): : System Fix Data.
+   "$GPRMC"       // $GPRMC - GPS system: Recommended Minimum Data.
+  ,"$GPGGA"       // $GPGPA - GPS system: System Fix Data.
+  ,"$GNRMC"       // $GNGLL - General (all systems): Recommended Minimum Data.
+  ,"$GNGGA"       // $GNRMC - General (all systems): : System Fix Data.
   // Additional sentences (None)
+  ,"$GNTXT"       // $GNTXT - General (all systems): generic text message.
+  ,"$GPTXT"       // $GPTXT - GPS system: generic text message.
 };
 
 
