@@ -12,15 +12,20 @@
   *   gpschecksum file.Log
   *
   * History:
+  *
+  *  v1.00.01.00 - 29-May-2024
+  *    Added output of % in summary line.
+  *
   *  23-May-2024
   *    Initial version.
   */
 
-#define VERSION "1.00.00.00"
+#define VERSION "1.00.01.00"
 
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <bits/stdc++.h>
 
 using namespace std;
 
@@ -116,7 +121,7 @@ int process(const char * file) {
   datafile.close();
 
 
-  cout << "processed: " << lineCnt << " lines. Errors: " << errCnt << endl;
+  cout << "processed: " << lineCnt << " lines. Errors: " << errCnt << " (" << fixed << setprecision(2) << ((float)errCnt / (float)lineCnt * 100.0) << "%)" << endl;
   return lineCnt;
 }
 
