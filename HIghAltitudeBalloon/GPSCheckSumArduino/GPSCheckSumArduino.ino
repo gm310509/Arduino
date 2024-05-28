@@ -4,13 +4,16 @@
  * By: G. McCall
  *     May 2024
  *
+ *  v1.01.00.00 28-05-2024
+ *    * Added ability to submit a sentence for checksum verification
+ *      via the Console.
  *  V1.00.00.00 23-05-2024
  *    * Initial version.
  *  
  */
 
 
-#define VERSION "v1.00.00.00"
+#define VERSION "v1.01.00.00"
 
 // Baud rate of the Serial (PC USB connection) device.
 #define CONSOLE_BAUD 115200
@@ -219,6 +222,8 @@ unsigned int chkSentence(const char * sentence) {
  
   if (parity != chksum) {
     return parity;
+  } else if (!isCheckSumTerm) {
+    return -1;
   } else {
     return 0;
   }
@@ -288,6 +293,20 @@ void chkFile(const char * cmd, char const *tokens[], int tokenCnt) {
 }
 
 
+void validateSentence(const char * sentence) {
+    Serial.println(sentence);
+    unsigned int checksum = chkSentence(sentence);
+    if (checksum == 0xffffffff) {
+      Serial.println(F("*** GPS sentence does not seem to include a checksum sequence"));
+    } else if (checksum != 0) {
+      Serial.print(F("*** invalid checskum. Should be: 0x")); Serial.println(checksum, HEX);
+      Serial.println();
+    } else {
+      Serial.println(F("Checksum OK"));
+    }
+}
+
+
 /************************************
  * Command Processing
  ************************************/
@@ -300,9 +319,14 @@ void usage() {
   Serial.println(F("  head [n] file   Print first n lines of the file (n = 20)."));
   Serial.println(F("  cat file        Print entire contents of the file."));
 
+  Serial.println();
+
   Serial.println(F("  chk [n] file    Check the GPS checksums for validity."));
   Serial.println(F("                  Skip the first n lines (n = 5)"));
-  
+
+  Serial.println(F("  $sentence*chk   Verify the checksum of the provided GPS sentence."));
+
+  Serial.println();
   Serial.println(F("  echo on|off     set command echo."));
   Serial.println(F("  help|usage      show commands."));
 }
@@ -388,6 +412,11 @@ void processConsoleCommand(const char *cmd) {
   // }
   // *t = '\0';
   strcpy (wrk, cmd);
+
+  if (wrk[0] == '$') {
+    validateSentence(cmd);
+    return;
+  }
 
   // Tokenise the input
   char *tokens[MAX_TOKENS] = {0};
