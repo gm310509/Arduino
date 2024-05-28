@@ -1,0 +1,14 @@
+# Ignore compiled binaries
+
+*.exe
+*.war
+*.o
+*.class
+
+# Ignore work files
+**/build
+*.tmp
+
+# Ignore backup files
+*.bak
+
