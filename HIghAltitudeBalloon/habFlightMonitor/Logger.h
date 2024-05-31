@@ -12,13 +12,21 @@
 // 1 for FAT16/FAT32, 2 for exFAT, 3 for FAT16/FAT32 and exFAT.
 #define SD_FAT_TYPE 3
 
+// Number of log time history records.
+#define MAX_LOG_HISTORY     40
+
+// Log history functions
+extern void recordLogTimeinHistory(int);
+extern void resetLogTimeHistory();
+extern int getLogTimeFromHistory(int);
+
 
 extern bool generateLogFileName(const char *, const char *);
 extern const char * getLogFileName();
 
 extern bool isLoggingEnabled();
 
-extern bool logMessage(const char *);
+extern int logMessage(const char *);
 // extern bool logMessage(const __FlashStringHelper *);
 
 #endif

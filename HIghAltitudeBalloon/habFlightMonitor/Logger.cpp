@@ -43,6 +43,33 @@ FsFile root;
 
 
 
+
+int logTimeHistory [MAX_LOG_HISTORY] = {};
+int logTimeIndex = 0;
+
+void recordLogTimeinHistory(int logTime) {
+  // Record the log time in the history (if there is space).
+  if (logTimeIndex < MAX_LOG_HISTORY) {
+    logTimeHistory[logTimeIndex++] = logTime;
+  }
+}
+
+void resetLogTimeHistory() {
+  for (int i = 0; i < MAX_LOG_HISTORY; i++) {
+    logTimeHistory[i] = -1;
+  }
+  logTimeIndex = 0;
+}
+
+int getLogTimeFromHistory(int index) {
+  if (index < 0 || index > MAX_LOG_HISTORY) {
+    return -1;
+  }
+  return logTimeHistory[index];
+}
+
+
+
 bool generateLogFileName(const char *, const char *) {
   char wrkBuf[80];
   if (sd.begin(SD_CONFIG)) {
@@ -83,12 +110,16 @@ bool isLoggingEnabled() {
 }
 
 
-
-bool logMessage(const char * msg) {
+/**
+ * Log a message to the SD Card.
+ *
+ * Return - the time (ms) required to log the record.
+ */
+int logMessage(const char * msg) {
   // Serial.print("Request to log: "); Serial.println(msg);
-
+  uint32_t _startTime = millis();
   if (!isLoggingEnabled()) {
-    return false;
+    return -1;
   }
 
   if (file.open(logFileName, O_RDWR | O_CREAT | O_AT_END)) {
@@ -96,9 +127,9 @@ bool logMessage(const char * msg) {
     file.println(msg);
     // file.flush();
     file.close();
-    return true;
+    return millis() - _startTime;
   }
-  return false;
+  return -1;
   
   // boolean result = file.println(msg);
   // file.flush();
@@ -106,7 +137,7 @@ bool logMessage(const char * msg) {
 }
 
 
-// bool logMessage(const __FlashStringHelper * msg) {
+// int logMessage(const __FlashStringHelper * msg) {
 //   const int MaxMessageSize = 200;
 //   char buf[MaxMessageSize];
 
