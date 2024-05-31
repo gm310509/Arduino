@@ -96,7 +96,8 @@ int checkGPSData() {
         for (unsigned int i = 0; i < ARRAY_SIZE(sentenceFilters); i++) {
           int result = strncmp(sentenceFilters[i], gpsSentence, strlen(sentenceFilters[i]));
           if (result == 0) {
-            logMessage(gpsSentence);
+            int logTime = logMessage(gpsSentence);
+            recordLogTimeinHistory(logTime);
             break;
           }
         }
@@ -441,4 +442,6 @@ void initHab(Adafruit_SSD1306 & display) {
   altitudeRecordLedOn(false);
   heaterOn(false);
   GPS_PORT.begin(GPS_BAUD);
+
+  resetLogTimeHistory();
 }

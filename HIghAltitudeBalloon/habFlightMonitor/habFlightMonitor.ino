@@ -2,32 +2,37 @@
  * Program to monitor and log a High Altitude Balloon
  * flight.
  *
- *  v1.03.01.00 25-05-2024
+ *  v1.03.02.00 gm310509 31-05-2024
+ *    * modified logging to allow for a history of log times.
+ *    * modified the $HAB record to output the history of log times 
+ *      and reset the history ready for the next batch of times).
+ *
+ *  v1.03.01.00 gm310509 25-05-2024
  *    * Added $GNTXT and $GPTXT to list of messages to log.
  *
- *  v1.03.00.00 24-05-2024
+ *  v1.03.00.00 gm310509 24-05-2024
  *    * Removed several small font items (lat, lon etc) from OLED display.
  *    * adjusted temperature display to use larger font.
  *
- *  V1.02.01.00 20-05-2024
+ *  V1.02.01.00 gm310509 20-05-2024
  *    * Removed "slowest log time" metric from log.
  *
- *  V1.02.00.00 20-05-2024
+ *  V1.02.00.00 gm310509 20-05-2024
  *    * Added logging of the NMEA GPS sentences processed by TinyGPS++.
  *    * Added column headers for all of the record types to the log file.
  *
- *  V1.01.00.00 19-05-2024
+ *  V1.01.00.00 gm310509 19-05-2024
  *    * Added logging to SD card.
  *
- *  V1.00.02.00 19-05-2024
+ *  V1.00.02.00 gm310509 19-05-2024
  *    * Added altitude record indicator.
  *
- *  V1.00.00.00 16-05-2024 (?)
+ *  V1.00.00.00 gm310509 16-05-2024 (?)
  *    * Initial version.
  *  
  */
 
-#define VERSION "v1.03.01.00"
+#define VERSION "v1.03.02.00"
 
 
 // HAB stuff
@@ -79,7 +84,7 @@ void logHeader() {
   // logMessage(F("$GPGGA,time,lat,ns,lon,ew,quality,numSV,hdop,alt,altU,sep,sepU,diffAge,diffStation,chksum"));
   // logMessage(F("$GNRMC,time,status,lat,ns,lon,ew,spdKnot,cog,date,mv,mvEW,posMode,navStatus,chksum"));
   // logMessage(F("$GNGGA,time,lat,ns,lon,ew,quality,numSV,hdop,alt,altU,sep,sepU,diffAge,diffStation,chksum"));
-  logMessage("$HAB,UTCTime,lat,lon,alt,hdop,satCnt,T1,T2,battV,sumLogTimeMs,logCnt");
+  logMessage("$HAB,UTCTime,lat,lon,alt,hdop,satCnt,T1,T2,battV,sumLogTimeMs,logCnt,logHist0,logHist1,logHist2,logHist3,logHist4,logHist5,logHist6,logHist7,logHist8,logHist9,logHist10,logHist11,logHist12,logHist13,logHist14,logHist15,logHist16,logHist17,logHist18,logHist19");
   logMessage("$GPRMC,time,status,lat,ns,lon,ew,spdKnot,cog,date,mv,mvEW,posMode,navStatus,chksum");
   logMessage("$GPGGA,time,lat,ns,lon,ew,quality,numSV,hdop,alt,altU,sep,sepU,diffAge,diffStation,chksum");
   logMessage("$GNRMC,time,status,lat,ns,lon,ew,spdKnot,cog,date,mv,mvEW,posMode,navStatus,chksum");
@@ -104,7 +109,7 @@ static uint32_t logCumulativeTimeMs = 0;
 
 
   uint32_t _now = millis();
-  char logRec [200];
+  char logRec [400];
   char wrkBuf[100];      // Workbuffer for any numeric conversions we need to do.
   
     // Is it too soon to log the next record?
@@ -137,9 +142,15 @@ static uint32_t logCumulativeTimeMs = 0;
   sprintf(wrkBuf, "%lu,%u", logCumulativeTimeMs, logCnt);
   strcat(logRec, wrkBuf);
 
-  if (!logMessage(logRec)) {
+  for (int i = 0; i < MAX_LOG_HISTORY; i++) {
+    sprintf(wrkBuf, ",%d", getLogTimeFromHistory(i));
+    strcat(logRec, wrkBuf);
+  }
+
+  if (logMessage(logRec) == -1) {
     Serial.print(F("*** Failed to log: ")); Serial.println(logRec);
   }
+  resetLogTimeHistory();
 
   uint32_t endTime = millis();
 
