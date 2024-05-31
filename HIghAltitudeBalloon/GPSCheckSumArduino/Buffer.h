@@ -3,7 +3,7 @@
 
 
 #ifndef BUFFER_SIZE
-#define BUFFER_SIZE 200
+#define BUFFER_SIZE 500
 #endif
 
 class Buffer {

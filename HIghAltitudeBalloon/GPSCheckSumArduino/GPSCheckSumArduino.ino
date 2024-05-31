@@ -116,7 +116,7 @@ void outputFile(const char * fileName, unsigned long headSize) {
     return;
   }
 
-  char inLine[200];
+  char inLine[500];
   unsigned long lineNo = 0;
 
   while (file.available() && ((headSize > 0 && lineNo < headSize) || headSize == 0)) {
