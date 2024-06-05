@@ -47,6 +47,11 @@ extern boolean isTimeValid(void);
 
 extern double getTemperature(int);
 
+extern int getTempUpdCnt(void);
+extern uint32_t getSumTempUpdateTime(void);
+extern uint32_t getSlowestTempUpdateTime(void);
+extern void resetTempMetrics(void);
+
 
 extern boolean checkHeater(double, double);
 extern boolean heaterOn(boolean);

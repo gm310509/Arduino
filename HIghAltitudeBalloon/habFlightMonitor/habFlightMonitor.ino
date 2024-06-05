@@ -57,24 +57,41 @@
 // The pins for I2C are defined by the Wire-library. 
 // On an arduino UNO:       A4(SDA), A5(SCL)
 // On an arduino MEGA 2560: 20(SDA), 21(SCL)
-// On an arduino LEONARDO:   2(SDA),  3(SCL), ...
+// On an arduino LEONARDO:   2(SDA),  3(SCL),
+// On a Teensy 4.1:         19(SDA), 18 (SCL), ...
 #define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
 
 Adafruit_SSD1306 display(OLED_SCREEN_WIDTH, OLED_SCREEN_HEIGHT, & OLED_PORT, OLED_RESET);
 
 
 
-
-
-void dumpStr(const char * lbl, const char *buf, int bufSize) {
-  Serial.print(lbl);
-  Serial.print(": Hex: ");
-  for (int i = 0; i < bufSize; i++) {
-    Serial.print((byte) buf[i], HEX);
-    Serial.print(' ');
+int oledCnt = 0;
+uint32_t sumOledUpdateTime = 0;
+uint32_t slowestOledUpdateTime = 0;
+void logOledTime(uint32_t startTime) {
+  oledCnt += 1;
+  uint32_t updTime = millis() - startTime;
+  if (updTime > slowestOledUpdateTime) {
+    slowestOledUpdateTime = updTime;
   }
-  Serial.println();
+  sumOledUpdateTime += updTime;
 }
+
+void resetOledTime() {
+  oledCnt = 0;
+  sumOledUpdateTime = 0;
+  slowestOledUpdateTime = 0;
+}
+
+// void dumpStr(const char * lbl, const char *buf, int bufSize) {
+//   Serial.print(lbl);
+//   Serial.print(": Hex: ");
+//   for (int i = 0; i < bufSize; i++) {
+//     Serial.print((byte) buf[i], HEX);
+//     Serial.print(' ');
+//   }
+//   Serial.println();
+// }
 
 
 
@@ -84,7 +101,7 @@ void logHeader() {
   // logMessage(F("$GPGGA,time,lat,ns,lon,ew,quality,numSV,hdop,alt,altU,sep,sepU,diffAge,diffStation,chksum"));
   // logMessage(F("$GNRMC,time,status,lat,ns,lon,ew,spdKnot,cog,date,mv,mvEW,posMode,navStatus,chksum"));
   // logMessage(F("$GNGGA,time,lat,ns,lon,ew,quality,numSV,hdop,alt,altU,sep,sepU,diffAge,diffStation,chksum"));
-  logMessage("$HAB,UTCTime,lat,lon,alt,hdop,satCnt,T1,T2,battV,sumLogTimeMs,logCnt,logHist0,logHist1,logHist2,logHist3,logHist4,logHist5,logHist6,logHist7,logHist8,logHist9,logHist10,logHist11,logHist12,logHist13,logHist14,logHist15,logHist16,logHist17,logHist18,logHist19");
+  logMessage("$HAB,UTCTime,lat,lon,alt,hdop,satCnt,T1,T2,battV,oledUpdCnt,oledUpdSumTime,oledUpdMaxTime,tempUpdCnt,tempUpdSumTime,tempUpdMaxTime,sumLogTimeMs,logCnt,logHist0,logHist1,logHist2,logHist3,logHist4,logHist5,logHist6,logHist7,logHist8,logHist9,logHist10,logHist11,logHist12,logHist13,logHist14,logHist15,logHist16,logHist17,logHist18,logHist19");
   logMessage("$GPRMC,time,status,lat,ns,lon,ew,spdKnot,cog,date,mv,mvEW,posMode,navStatus,chksum");
   logMessage("$GPGGA,time,lat,ns,lon,ew,quality,numSV,hdop,alt,altU,sep,sepU,diffAge,diffStation,chksum");
   logMessage("$GNRMC,time,status,lat,ns,lon,ew,spdKnot,cog,date,mv,mvEW,posMode,navStatus,chksum");
@@ -138,6 +155,14 @@ static uint32_t logCumulativeTimeMs = 0;
 
   sprintf(wrkBuf, "%.2f,%.2f,%.2f,", tempC1, tempC2, battV);
   strcat(logRec, wrkBuf);
+
+  sprintf(wrkBuf, "%d,%lu,%lu,", oledCnt, sumOledUpdateTime, slowestOledUpdateTime);
+  strcat(logRec, wrkBuf);
+  resetOledTime();
+
+  sprintf(wrkBuf, "%d,%lu,%lu,", getTempUpdCnt(), getSumTempUpdateTime(), getSlowestTempUpdateTime());
+  strcat(logRec, wrkBuf);
+  resetTempMetrics();
 
   sprintf(wrkBuf, "%lu,%u", logCumulativeTimeMs, logCnt);
   strcat(logRec, wrkBuf);
@@ -544,7 +569,9 @@ bool newData = false;
 
 
   if (newData) {
+    uint32_t startTime = millis();
     updateDisplayV2(localHour, minute, second, timeValid, lat, lon, locValid, alt, altValid, recordBroken, hdop, hdopValid, satCnt, satCntValid, tempInternal, tempExternal, batteryVoltage);
+    logOledTime(startTime);
     logData(utcHour, minute, second, timeValid, lat, lon, locValid, alt, altValid, recordBroken, hdop, hdopValid, satCnt, satCntValid, tempInternal, tempExternal, batteryVoltage);
   }
 }

@@ -125,6 +125,48 @@ int checkGPSData() {
 
 
 
+int tempCnt = 0;
+uint32_t sumTempUpdateTime = 0;
+uint32_t slowestTempUpdateTime = 0;
+void logTempTime(uint32_t startTime) {
+  tempCnt += 1;
+  uint32_t updTime = millis() - startTime;
+  if (updTime > slowestTempUpdateTime) {
+    slowestTempUpdateTime = updTime;
+  }
+  sumTempUpdateTime += updTime;
+}
+
+
+
+int getTempUpdCnt() {
+  return tempCnt;
+}
+uint32_t getSumTempUpdateTime() {
+  return sumTempUpdateTime;
+}
+uint32_t getSlowestTempUpdateTime() {
+  return slowestTempUpdateTime;
+}
+void resetTempMetrics() {
+  tempCnt = 0;
+  sumTempUpdateTime = 0;
+  slowestTempUpdateTime = 0;
+}
+
+
+void dumpStr(const char * lbl, const char *buf, int bufSize) {
+  Serial.print(lbl);
+  Serial.print(": Hex: ");
+  for (int i = 0; i < bufSize; i++) {
+    Serial.print((byte) buf[i], HEX);
+    Serial.print(' ');
+  }
+  Serial.println();
+}
+
+
+
 int checkTemperatureData() {
 static uint32_t lastUpdateTime;
 unsigned long updateInterval = 1000;
@@ -137,6 +179,7 @@ unsigned long updateInterval = 1000;
     for (unsigned int i = 0; i < ARRAY_SIZE(tempSensorAddr); i++) {
       temperature[i] = sensors.getTempC(tempSensorAddr[i]);
     }
+    logTempTime(_now);
     return 1;
   }
   return 0;
