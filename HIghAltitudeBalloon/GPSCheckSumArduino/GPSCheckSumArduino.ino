@@ -13,7 +13,7 @@
  */
 
 
-#define VERSION "v1.01.00.00"
+#define VERSION "v1.01.01.00"
 
 // Baud rate of the Serial (PC USB connection) device.
 #define CONSOLE_BAUD 115200
